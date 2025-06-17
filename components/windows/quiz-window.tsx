@@ -9,14 +9,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { useWorkspaceStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
 import { CheckCircle, XCircle, ArrowRight, BarChart } from "lucide-react"
-import { getStats } from "@/lib/api"
+import { rsvpApi, QuizQuestion, QuizValidateResponse } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 
-interface Question {
-  type: "multiple_choice" | "open"
-  question: string
-  options?: string[]
-  answer: string
-}
 
 interface QuizWindowProps {
   windowData: {
@@ -25,7 +20,7 @@ interface QuizWindowProps {
     position: { x: number; y: number; width: number; height: number }
     data?: {
       sessionId: string
-      questions: Question[]
+      questions: QuizQuestion[]
       text: string
     }
   }
@@ -39,6 +34,7 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
 
   const { addWindow } = useWorkspaceStore()
   const { toast } = useToast()
+  const { token } = useAuthStore()
 
   const questions = windowData.data?.questions || []
   const sessionId = windowData.data?.sessionId || ""
@@ -65,33 +61,42 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
     }
   }
 
-  const handleSubmit = () => {
-    // Calculate score for multiple choice questions
-    let correctAnswers = 0
-    questions.forEach((question, index) => {
-      if (question.type === "multiple_choice" && answers[index] === question.answer) {
-        correctAnswers++
+  const [validation, setValidation] = useState<QuizValidateResponse | null>(null)
+
+  const handleSubmit = async () => {
+    if (!token) {
+      toast({ title: "Error", description: "Sesión no autenticada", variant: "destructive" })
+      return
+    }
+
+    try {
+      const payload = {
+        rsvp_session_id: sessionId,
+        answers: questions.map((q, i) => ({
+          question_id: q.id,
+          user_answer: answers[i],
+        })),
       }
-    })
-
-    const multipleChoiceQuestions = questions.filter((q) => q.type === "multiple_choice").length
-    const calculatedScore =
-      multipleChoiceQuestions > 0 ? Math.round((correctAnswers / multipleChoiceQuestions) * 100) : 0
-
-    setScore(calculatedScore)
-    setIsSubmitted(true)
+      const res = await rsvpApi.validateQuiz(payload, token)
+      setValidation(res)
+      setScore(res.overall_score)
+      setIsSubmitted(true)
+    } catch (err) {
+      toast({ title: "Error", description: "No se pudo enviar el quiz", variant: "destructive" })
+    }
   }
 
   const handleViewStats = async () => {
     try {
-      const stats = await getStats(sessionId)
+      if (!token) throw new Error("No autenticado")
+      const stats = await rsvpApi.getStats(token)
 
       addWindow("stats", {
         sessionId,
         stats,
         score,
         text,
-        answers,
+        validation,
         questions,
       })
 
@@ -115,10 +120,10 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
   const renderQuestion = () => {
     if (!currentQuestion) return null
 
-    if (currentQuestion.type === "multiple_choice") {
+    if (currentQuestion.question_type === "multiple_choice") {
       return (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">{currentQuestion.question}</h3>
+          <h3 className="text-lg font-medium">{currentQuestion.question_text}</h3>
 
           <RadioGroup
             value={answers[currentQuestionIndex] || ""}
@@ -131,7 +136,7 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
                 key={index}
                 className={`flex items-center space-x-2 p-3 rounded-md border ${
                   isSubmitted
-                    ? option === currentQuestion.answer
+                    ? option === currentQuestion.correct_answer
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : answers[currentQuestionIndex] === option
                         ? "border-red-500 bg-red-50 dark:bg-red-900/20"
@@ -143,8 +148,8 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
                 <Label htmlFor={`option-${index}`} className="flex-1">
                   {option}
                 </Label>
-                {isSubmitted && option === currentQuestion.answer && <CheckCircle className="h-5 w-5 text-green-500" />}
-                {isSubmitted && option !== currentQuestion.answer && answers[currentQuestionIndex] === option && (
+                {isSubmitted && option === currentQuestion.correct_answer && <CheckCircle className="h-5 w-5 text-green-500" />}
+                {isSubmitted && option !== currentQuestion.correct_answer && answers[currentQuestionIndex] === option && (
                   <XCircle className="h-5 w-5 text-red-500" />
                 )}
               </div>
@@ -152,10 +157,10 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
           </RadioGroup>
         </div>
       )
-    } else if (currentQuestion.type === "open") {
+    } else if (currentQuestion.question_type === "open") {
       return (
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">{currentQuestion.question}</h3>
+          <h3 className="text-lg font-medium">{currentQuestion.question_text}</h3>
 
           <Textarea
             value={answers[currentQuestionIndex] || ""}
@@ -176,7 +181,7 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
           {isSubmitted && (
             <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700">
               <h4 className="font-medium mb-2">Respuesta sugerida:</h4>
-              <p className="text-sm">{currentQuestion.answer}</p>
+              <p className="text-sm">{currentQuestion.correct_answer}</p>
             </div>
           )}
         </div>

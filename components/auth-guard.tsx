@@ -11,24 +11,25 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ children }: AuthGuardProps) {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, token, fetchUser } = useAuthStore()
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    // Public routes that don't require authentication
     const publicRoutes = ["/auth/login", "/auth/register", "/auth/forgot-password"]
 
-    // If not authenticated and not on a public route, redirect to login
-    if (!isAuthenticated && !publicRoutes.includes(pathname)) {
+    if (token && !isAuthenticated) {
+      fetchUser()
+    }
+
+    if (!token && !publicRoutes.includes(pathname)) {
       router.push("/auth/login")
     }
 
-    // If authenticated and on an auth route, redirect to home
     if (isAuthenticated && publicRoutes.includes(pathname)) {
       router.push("/")
     }
-  }, [isAuthenticated, pathname, router])
+  }, [isAuthenticated, pathname, router, token, fetchUser])
 
   return <>{children}</>
 }
