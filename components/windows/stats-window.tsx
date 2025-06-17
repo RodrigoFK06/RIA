@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useWorkspaceStore } from "@/lib/store"
 import { BarChart, BookOpen, MessageSquare, Share2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatsResponse, QuizValidateResponse, QuizQuestion } from "@/lib/rsvpApi"
 
 interface StatsWindowProps {
   windowData: {
@@ -14,17 +15,11 @@ interface StatsWindowProps {
     position: { x: number; y: number; width: number; height: number }
     data?: {
       sessionId: string
-      stats: {
-        wpm: number
-        totalTime: number
-        idealTime: number
-        score: number
-        feedback: string
-      }
+      stats: StatsResponse
       score: number
       text: string
-      answers: string[]
-      questions: any[]
+      validation: QuizValidateResponse | null
+      questions: QuizQuestion[]
     }
   }
 }
@@ -32,16 +27,13 @@ interface StatsWindowProps {
 export default function StatsWindow({ windowData }: StatsWindowProps) {
   const { addWindow } = useWorkspaceStore()
 
-  const stats = windowData.data?.stats || {
-    wpm: 0,
-    totalTime: 0,
-    idealTime: 0,
-    score: 0,
-    feedback: "",
-  }
-
+  const stats = windowData.data?.stats
+  const overall = stats?.overall_stats
+  const last = stats?.recent_sessions_stats?.[0]
   const score = windowData.data?.score || 0
   const sessionId = windowData.data?.sessionId || ""
+  const validation = windowData.data?.validation
+  const questions = windowData.data?.questions || []
 
   const handleOpenAssistant = () => {
     addWindow("assistant", {
@@ -49,7 +41,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
       context: {
         text: windowData.data?.text || "",
         score,
-        stats,
+        stats: overall,
       },
     })
   }
@@ -88,7 +80,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className="text-sm font-medium">Velocidad de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.wpm} WPM</div>
+                  <div className="text-2xl font-bold">{overall?.average_wpm ?? 0} WPM</div>
                   <p className="text-xs text-slate-500 mt-1">Palabras por minuto</p>
                 </CardContent>
               </Card>
@@ -108,7 +100,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className="text-sm font-medium">Tiempo de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{Math.round(stats.totalTime / 1000)}s</div>
+                  <div className="text-2xl font-bold">{overall ? Math.round(overall.total_reading_time_seconds) : 0}s</div>
                   <p className="text-xs text-slate-500 mt-1">Tiempo total empleado</p>
                 </CardContent>
               </Card>
@@ -118,8 +110,8 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className="text-sm font-medium">Tiempo Ideal</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{Math.round(stats.idealTime / 1000)}s</div>
-                  <p className="text-xs text-slate-500 mt-1">Tiempo estimado óptimo</p>
+                  <div className="text-2xl font-bold">{overall?.total_sessions_read ?? 0}</div>
+                  <p className="text-xs text-slate-500 mt-1">Sesiones completadas</p>
                 </CardContent>
               </Card>
             </div>
@@ -130,22 +122,22 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                 <CardDescription>Tu rendimiento comparado con el ideal</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[200px] flex items-end justify-center gap-16">
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="w-16 bg-slate-200 dark:bg-slate-700 rounded-t-md"
-                      style={{ height: `${Math.min(180, stats.totalTime / 50)}px` }}
-                    ></div>
-                    <span className="text-xs mt-2">Tu tiempo</span>
+                  <div className="h-[200px] flex items-end justify-center gap-16">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className="w-16 bg-slate-200 dark:bg-slate-700 rounded-t-md"
+                        style={{ height: `${Math.min(180, (last?.reading_time_seconds ?? 0) * 3)}px` }}
+                      ></div>
+                      <span className="text-xs mt-2">Tu tiempo</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <div
+                        className="w-16 bg-green-200 dark:bg-green-700 rounded-t-md"
+                        style={{ height: `${Math.min(180, (last?.ai_estimated_ideal_reading_time_seconds ?? 0) * 3)}px` }}
+                      ></div>
+                      <span className="text-xs mt-2">Tiempo ideal</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center">
-                    <div
-                      className="w-16 bg-green-200 dark:bg-green-700 rounded-t-md"
-                      style={{ height: `${Math.min(180, stats.idealTime / 50)}px` }}
-                    ></div>
-                    <span className="text-xs mt-2">Tiempo ideal</span>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -158,7 +150,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
               </CardHeader>
               <CardContent>
                 <div className="prose dark:prose-invert max-w-none">
-                  <p>{stats.feedback}</p>
+                  <p>{stats?.personalized_feedback ?? "Sin feedback disponible"}</p>
                 </div>
 
                 <div className="mt-6 flex justify-end">

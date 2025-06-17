@@ -7,7 +7,8 @@ import { Slider } from "@/components/ui/slider"
 import { useWorkspaceStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
 import { Play, Pause, SkipBack, SkipForward, CheckCircle2, AlignLeft } from "lucide-react"
-import { getQuizQuestions } from "@/lib/api"
+import { rsvpApi } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 import { Progress } from "@/components/ui/progress"
 
 interface ReaderWindowProps {
@@ -38,10 +39,28 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const { windows, addWindow, updateWindowData } = useWorkspaceStore()
   const { toast } = useToast()
+  const { token } = useAuthStore()
 
   const words = windowData.data?.words || []
   const sessionId = windowData.data?.sessionId || ""
   const text = windowData.data?.text || ""
+
+  useEffect(() => {
+    const load = async () => {
+      if (!sessionId || words.length || !token) return
+      try {
+        const data = await rsvpApi.getRsvp(sessionId, token)
+        updateWindowData(windowData.id, { text: data.text, words: data.words })
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "No se pudo cargar la sesión.",
+          variant: "destructive",
+        })
+      }
+    }
+    load()
+  }, [sessionId, words.length, token, updateWindowData, windowData.id, toast])
 
   const progress = words.length > 0 ? (currentWordIndex / words.length) * 100 : 0
   const isComplete = currentWordIndex >= words.length
@@ -144,11 +163,12 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
 
   const handleStartQuiz = async () => {
     try {
-      const questions = await getQuizQuestions(sessionId)
+      if (!token) throw new Error("No autenticado")
+      const data = await rsvpApi.createQuiz({ rsvp_session_id: sessionId }, token)
 
       addWindow("quiz", {
         sessionId,
-        questions,
+        questions: data.questions,
         text,
       })
 
