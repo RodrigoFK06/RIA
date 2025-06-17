@@ -48,7 +48,7 @@ export default function SettingsPage() {
   const profileForm = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: user?.name || "",
+      name: user?.full_name || "",
       email: user?.email || "",
     },
   })
