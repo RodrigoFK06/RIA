@@ -7,7 +7,8 @@ import { Slider } from "@/components/ui/slider"
 import { useWorkspaceStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
 import { Play, Pause, SkipBack, SkipForward, CheckCircle2, AlignLeft } from "lucide-react"
-import { getQuizQuestions } from "@/lib/api"
+import { createQuiz } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 import { Progress } from "@/components/ui/progress"
 
 interface ReaderWindowProps {
@@ -144,7 +145,9 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
 
   const handleStartQuiz = async () => {
     try {
-      const questions = await getQuizQuestions(sessionId)
+      const token = useAuthStore.getState().token
+      if (!token) throw new Error("Not authenticated")
+      const { questions } = await createQuiz({ rsvp_session_id: sessionId }, token)
 
       addWindow("quiz", {
         sessionId,
