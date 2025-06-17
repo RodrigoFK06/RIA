@@ -571,10 +571,8 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
                     <User className="h-4 w-4" />
                   </div>
                   <div className="text-sm">
-                    <p className="font-medium">{user?.name || "Usuario"}</p>
-                    <p className="text-xs text-slate-500">
-                      Plan {user?.plan === "free" ? "Gratuito" : user?.plan === "premium" ? "Premium" : "Pro"}
-                    </p>
+                    <p className="font-medium">{user?.full_name || "Usuario"}</p>
+                    <p className="text-xs text-slate-500">{user?.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">

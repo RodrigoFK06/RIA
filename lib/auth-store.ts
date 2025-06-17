@@ -2,208 +2,85 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  plan: "free" | "premium" | "pro"
-  createdAt: string
-}
+import { rsvpApi, RegisterRequest, LoginRequest, User } from "@/lib/rsvpApi"
 
 interface AuthState {
+  token: string | null
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
 
-  // Auth actions
+  register: (fullName: string, email: string, password: string) => Promise<void>
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
-  updateProfile: (data: { name: string; email: string }) => Promise<void>
-  updatePassword: (currentPassword: string, newPassword: string) => Promise<void>
-}
+  fetchUser: () => Promise<void>
 
-// Mock user data for demo purposes
-const mockUsers = [
-  {
-    id: "user-1",
-    name: "Usuario Demo",
-    email: "demo@ejemplo.com",
-    password: "password123",
-    plan: "free",
-    createdAt: new Date().toISOString(),
-  },
-]
+  // placeholders to keep compatibility
+  updateProfile?: (data: { name: string; email: string }) => Promise<void>
+  updatePassword?: (current: string, newPassword: string) => Promise<void>
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
+      token: null,
       user: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
 
-      login: async (email, password) => {
+      register: async (fullName, email, password) => {
         set({ isLoading: true, error: null })
-
         try {
-          // Simulate API call
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-
-          // Find user in mock data
-          const user = mockUsers.find((u) => u.email === email && u.password === password)
-
-          if (!user) {
-            throw new Error("Credenciales incorrectas")
-          }
-
-          // Remove password from user object
-          const { password: _, ...userWithoutPassword } = user
-
-          set({
-            user: userWithoutPassword as User,
-            isAuthenticated: true,
-            isLoading: false,
-          })
-        } catch (error) {
-          set({
-            error: (error as Error).message,
-            isLoading: false,
-          })
-          throw error
+          const data: RegisterRequest = { full_name: fullName, email, password }
+          await rsvpApi.register(data)
+          await get().login(email, password)
+        } catch (err: any) {
+          set({ error: err.message || "Error" })
+          throw err
+        } finally {
+          set({ isLoading: false })
         }
       },
 
-      register: async (name, email, password) => {
+      login: async (email, password) => {
         set({ isLoading: true, error: null })
-
         try {
-          // Simulate API call
-          await new Promise((resolve) => setTimeout(resolve, 1000))
+          const data: LoginRequest = { username: email, password }
+          const res = await rsvpApi.login(data)
+          set({ token: res.access_token, isAuthenticated: true })
+          await get().fetchUser()
+        } catch (err: any) {
+          set({ error: err.message || "Error", isAuthenticated: false, token: null })
+          throw err
+        } finally {
+          set({ isLoading: false })
+        }
+      },
 
-          // Check if user already exists
-          const existingUser = mockUsers.find((u) => u.email === email)
-          if (existingUser) {
-            throw new Error("El correo electrónico ya está en uso")
-          }
-
-          // Create new user
-          const newUser = {
-            id: `user-${Date.now()}`,
-            name,
-            email,
-            password,
-            plan: "free",
-            createdAt: new Date().toISOString(),
-          }
-
-          // Add to mock users (in a real app, this would be an API call)
-          mockUsers.push(newUser)
-
-          // Remove password from user object
-          const { password: _, ...userWithoutPassword } = newUser
-
-          set({
-            user: userWithoutPassword as User,
-            isAuthenticated: true,
-            isLoading: false,
-          })
-        } catch (error) {
-          set({
-            error: (error as Error).message,
-            isLoading: false,
-          })
-          throw error
+      fetchUser: async () => {
+        const token = get().token
+        if (!token) return
+        try {
+          const user = await rsvpApi.me(token)
+          set({ user, isAuthenticated: true })
+        } catch (err) {
+          set({ token: null, user: null, isAuthenticated: false })
         }
       },
 
       logout: () => {
-        set({
-          user: null,
-          isAuthenticated: false,
-        })
+        set({ token: null, user: null, isAuthenticated: false })
       },
 
-      updateProfile: async (data) => {
-        set({ isLoading: true, error: null })
-
-        try {
-          // Simulate API call
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-
-          const currentUser = get().user
-          if (!currentUser) {
-            throw new Error("No hay usuario autenticado")
-          }
-
-          // Update user in mock data
-          const userIndex = mockUsers.findIndex((u) => u.id === currentUser.id)
-          if (userIndex >= 0) {
-            mockUsers[userIndex] = {
-              ...mockUsers[userIndex],
-              name: data.name,
-              email: data.email,
-            }
-          }
-
-          set({
-            user: {
-              ...currentUser,
-              name: data.name,
-              email: data.email,
-            },
-            isLoading: false,
-          })
-        } catch (error) {
-          set({
-            error: (error as Error).message,
-            isLoading: false,
-          })
-          throw error
-        }
-      },
-
-      updatePassword: async (currentPassword, newPassword) => {
-        set({ isLoading: true, error: null })
-
-        try {
-          // Simulate API call
-          await new Promise((resolve) => setTimeout(resolve, 1000))
-
-          const currentUser = get().user
-          if (!currentUser) {
-            throw new Error("No hay usuario autenticado")
-          }
-
-          // Find user in mock data
-          const userIndex = mockUsers.findIndex((u) => u.id === currentUser.id)
-          if (userIndex < 0) {
-            throw new Error("Usuario no encontrado")
-          }
-
-          // Verify current password
-          if (mockUsers[userIndex].password !== currentPassword) {
-            throw new Error("La contraseña actual es incorrecta")
-          }
-
-          // Update password
-          mockUsers[userIndex].password = newPassword
-
-          set({ isLoading: false })
-        } catch (error) {
-          set({
-            error: (error as Error).message,
-            isLoading: false,
-          })
-          throw error
-        }
-      },
+      updateProfile: async () => {},
+      updatePassword: async () => {},
     }),
     {
       name: "auth-storage",
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ token: state.token, user: state.user, isAuthenticated: state.isAuthenticated }),
     },
   ),
 )
+
