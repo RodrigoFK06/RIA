@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { Send, Loader2 } from "lucide-react"
-import { getAssistantResponse } from "@/lib/api"
+import { assistantQuery } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface Message {
@@ -87,16 +88,14 @@ export default function AssistantWindow({ windowData }: AssistantWindowProps) {
     setIsLoading(true)
 
     try {
-      const response = await getAssistantResponse(
-        input,
-        sessionId,
-        context
-          ? {
-              text: context.text,
-              score: context.score,
-              stats: context.stats,
-            }
-          : undefined,
+      const token = useAuthStore.getState().token
+      if (!token) throw new Error("Not authenticated")
+      const { response } = await assistantQuery(
+        {
+          query: input,
+          rsvp_session_id: sessionId,
+        },
+        token,
       )
 
       const assistantMessage: Message = {

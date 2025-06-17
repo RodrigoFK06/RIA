@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useWorkspaceStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, BookOpen, Upload } from "lucide-react"
-import { generateRSVPContent } from "@/lib/api"
+import { createRsvpSession } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 
 interface TopicWindowProps {
   windowData: {
@@ -38,7 +39,9 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
 
     setIsLoading(true)
     try {
-      const data = await generateRSVPContent(topic)
+      const token = useAuthStore.getState().token
+      if (!token) throw new Error("Not authenticated")
+      const data = await createRsvpSession({ topic }, token)
 
       // Add reader window with the generated content
       addWindow("reader", {

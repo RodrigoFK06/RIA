@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useWorkspaceStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
 import { CheckCircle, XCircle, ArrowRight, BarChart } from "lucide-react"
-import { getStats } from "@/lib/api"
+import { fetchStats } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 
 interface Question {
   type: "multiple_choice" | "open"
@@ -84,7 +85,9 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
 
   const handleViewStats = async () => {
     try {
-      const stats = await getStats(sessionId)
+      const token = useAuthStore.getState().token
+      if (!token) throw new Error("Not authenticated")
+      const stats = await fetchStats(token)
 
       addWindow("stats", {
         sessionId,

@@ -2,7 +2,8 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { generateRSVPContent } from "@/lib/api"
+import { createRsvpSession } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 
 interface Window {
   id: string
@@ -313,8 +314,11 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         // If it's a generate type, fetch content from API
         if (sessionData.type === "generate") {
           try {
-            const data = await generateRSVPContent(sessionData.topic)
+            const token = useAuthStore.getState().token
+            if (!token) throw new Error("Not authenticated")
+            const data = await createRsvpSession({ topic: sessionData.topic }, token)
             newSession.text = data.text
+            newSession.id = data.id
           } catch (error) {
             console.error("Error generating content:", error)
           }
@@ -322,10 +326,10 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
         set((state) => ({
           sessions: [newSession, ...state.sessions],
-          activeSession: id,
+          activeSession: newSession.id,
         }))
 
-        return id
+        return newSession.id
       },
 
       updateSession: (id, data) => {
