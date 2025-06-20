@@ -218,7 +218,7 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
             )}
             {isMobile && (
               <TabsTrigger value="stats" className="flex items-center gap-1 text-sm px-2">
-                <Activity className="h-4 w-4" /> Stats
+                <Activity className="h-4 w-4" /> Estadísticas
               </TabsTrigger>
             )}
           </TabsList>

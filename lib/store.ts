@@ -21,6 +21,7 @@ interface Session {
   title: string
   topic: string
   text: string
+  words?: string[]
   folderId: string | null
   type: "generate" | "custom"
   createdAt: string
@@ -205,6 +206,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               title: sessionData.title || `Sesión sobre ${sessionData.topic}`,
               topic: sessionData.topic,
               text: data.text,
+              words: data.words,
               folderId: sessionData.folderId,
               type: "generate",
               createdAt: new Date().toISOString(),
@@ -236,6 +238,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const newSession: Session = {
             id,
             ...sessionData,
+            words: sessionData.text.split(/\s+/).filter(word => word.length > 0),
             createdAt: new Date().toISOString(),
             userId: userId, // Asignar userId para filtrado de seguridad
           }
@@ -506,20 +509,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           // If a userId is provided, sync their sessions from the API
           if (userId) {
             if (statsData.recent_sessions_stats) {
-              // Map API sessions, preserving full text if it exists locally
+              // Map API sessions, preservando datos locales cuando existan
               const apiSessions: Session[] = statsData.recent_sessions_stats.map((apiSession) => {
                 const existingSession = get().sessions.find(s => s.id === apiSession.session_id)
-                
-                const text = (existingSession && existingSession.text && existingSession.text.length > (apiSession.text_snippet?.length || 0))
-                             ? existingSession.text
-                             : (apiSession.text_snippet || "");
+
+                const text = existingSession?.text && existingSession.text.length > (apiSession.text_snippet?.length || 0)
+                  ? existingSession.text
+                  : (apiSession.text_snippet || "")
+
+                const words = existingSession?.words
+
+                const topic = existingSession?.topic || apiSession.topic || "Lectura general"
 
                 return {
                   id: apiSession.session_id,
-                  title: apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
-                  topic: apiSession.topic || "Lectura general",
-                  text: text, // Use preserved or snippet text
-                  folderId: null,
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+                  topic,
+                  text,
+                  words,
+                  folderId: existingSession?.folderId || null,
                   type: "generate" as const,
                   createdAt: apiSession.created_at,
                   userId: userId,
@@ -577,16 +585,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
               statsData.recent_sessions_stats.forEach(apiSession => {
                 const existingSession = sessionsMap.get(apiSession.session_id);
-                
-                const text = (existingSession && existingSession.text && existingSession.text.length > (apiSession.text_snippet?.length || 0))
-                             ? existingSession.text
-                             : (apiSession.text_snippet || "");
+
+                const text = existingSession?.text && existingSession.text.length > (apiSession.text_snippet?.length || 0)
+                  ? existingSession.text
+                  : (apiSession.text_snippet || "");
+
+                const words = existingSession?.words;
+
+                const topic = existingSession?.topic || apiSession.topic || "Lectura general";
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
-                  title: apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
-                  topic: apiSession.topic || "Lectura general",
-                  text: text, // Use preserved or snippet text
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+                  topic,
+                  text,
+                  words,
                   folderId: existingSession?.folderId || null,
                   type: "generate" as const,
                   createdAt: apiSession.created_at,
