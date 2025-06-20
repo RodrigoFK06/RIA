@@ -40,6 +40,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
+import { useBreakpoint } from "@/hooks/use-breakpoint"
 
 interface SidebarProps {
   open: boolean
@@ -58,8 +59,10 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
     setActiveSession,
     addFolder,
     addProject,
+    getUserSessions,
   } = useWorkspaceStore()
   const { user, logout } = useAuthStore()
+  const { isMobile, isTablet } = useBreakpoint()
   const [searchQuery, setSearchQuery] = useState("")
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({})
   const [newFolderName, setNewFolderName] = useState("")
@@ -71,6 +74,16 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
   const router = useRouter()
   const { toast } = useToast()
 
+  // SEGURIDAD: Filtrar sesiones solo del usuario actual
+  const userSessions = user?.id ? getUserSessions(user.id) : []
+
+  // Auto-colapsar sidebar en mobile/tablet
+  useEffect(() => {
+    if (isMobile && open) {
+      setOpen(false)
+    }
+  }, [isMobile, open, setOpen])
+
   // Initialize open folders state
   useEffect(() => {
     const initialOpenFolders: Record<string, boolean> = {}
@@ -79,9 +92,8 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
     })
     setOpenFolders(initialOpenFolders)
   }, [folders])
-
-  // Group sessions by date
-  const groupedSessions = sessions.reduce(
+  // Group sessions by date - SOLO SESIONES DEL USUARIO ACTUAL
+  const groupedSessions = userSessions.reduce(
     (groups, session) => {
       const date = new Date(session.createdAt)
       const today = new Date()
@@ -161,9 +173,7 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
         variant: "destructive",
       })
       return
-    }
-
-    try {
+    }    try {
       const projectId = addProject(newProjectName, selectedFolderId)
       setNewProjectName("")
       setIsNewProjectDialogOpen(false)
@@ -200,45 +210,52 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
   const handleSettingsClick = () => {
     router.push("/settings")
   }
-
   const filteredSessions = searchQuery
-    ? sessions.filter(
+    ? userSessions.filter(
         (session) =>
           session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           session.topic.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : []
-
   return (
     <div
       className={cn(
         "h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-all duration-300",
-        open ? "w-72" : "w-16",
+        isMobile ? "w-0 overflow-hidden" : open ? "w-72" : "w-16",
+        isMobile && open && "fixed inset-y-0 left-0 z-50 w-72 shadow-lg"
       )}
     >
       <div className="flex h-full flex-col">
-        <div className="flex h-14 items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800">
+        <div className={cn(
+          "flex items-center border-b border-slate-200 dark:border-slate-800",
+          isMobile ? "h-16 px-4 justify-between" : "h-14 px-4 justify-between"
+        )}>
           {open ? (
             <div className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6" />
-              <span className="font-semibold">RIA Lector</span>
+              <BookOpen className={isMobile ? "h-7 w-7" : "h-6 w-6"} />
+              <span className={cn("font-semibold", isMobile ? "text-lg" : "")}>RIA Lector</span>
             </div>
           ) : (
             <BookOpen className="h-6 w-6 mx-auto" />
           )}
 
-          <Button variant="ghost" size="icon" onClick={() => setOpen(!open)} className={cn(!open && "mx-auto")}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setOpen(!open)} 
+            className={cn(!open && "mx-auto", isMobile && "h-10 w-10")}
+          >
             {open ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
         </div>
 
         {open && (
-          <div className="px-4 py-2">
+          <div className={cn("py-2", isMobile ? "px-4" : "px-4")}>
             <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+              <Search className={cn("absolute left-2 text-slate-500", isMobile ? "top-3 h-5 w-5" : "top-2.5 h-4 w-4")} />
               <Input
                 placeholder="Buscar sesiones..."
-                className="pl-8"
+                className={cn(isMobile ? "pl-9 h-12 text-base" : "pl-8")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />

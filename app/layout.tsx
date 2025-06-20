@@ -4,6 +4,8 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import AuthGuard from "@/components/auth-guard"
+import DataLoader from "@/components/data-loader"
+import IdleManager from "@/components/idle-manager"
 import { Toaster } from "@/components/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -23,7 +25,11 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthGuard>{children}</AuthGuard>
+          <AuthGuard>
+            <DataLoader />
+            <IdleManager />
+            {children}
+          </AuthGuard>
           <Toaster />
         </ThemeProvider>
       </body>

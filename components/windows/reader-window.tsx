@@ -41,9 +41,25 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
   const { toast } = useToast()
   const { token } = useAuthStore()
 
-  const words = windowData.data?.words || []
-  const sessionId = windowData.data?.sessionId || ""
+  // FIX: Use words from data if available, otherwise split the text.
+  // This ensures the reader has content immediately if text is present.
   const text = windowData.data?.text || ""
+  const words =
+    windowData.data?.words && windowData.data.words.length > 0
+      ? windowData.data.words
+      : text.split(/\s+/).filter(Boolean)
+  const sessionId = windowData.data?.sessionId || ""
+
+  // DEBUG: Log data integrity on mount and when data changes.
+  useEffect(() => {
+    console.log(`[ReaderWindow] Mounted/Updated for Session ID: ${sessionId}`)
+    console.log(`  - Text length: ${text.length}`)
+    console.log(`  - Words array length: ${words.length}`)
+    if (words.length > 0) {
+      console.log(`  - First 5 words:`, words.slice(0, 5))
+      console.log(`  - Last 5 words:`, words.slice(-5))
+    }
+  }, [sessionId, text, words])
 
   useEffect(() => {
     const load = async () => {

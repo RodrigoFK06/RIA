@@ -2,7 +2,7 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { generateRSVPContent } from "@/lib/api"
+import { rsvpApi } from "@/lib/rsvpApi"
 
 interface Window {
   id: string
@@ -24,6 +24,7 @@ interface Session {
   folderId: string | null
   type: "generate" | "custom"
   createdAt: string
+  userId?: string // Agregar userId para filtrado de seguridad
   stats?: {
     wpm: number
     totalTime: number
@@ -36,7 +37,7 @@ interface Session {
 interface Project {
   id: string
   name: string
-  folderId: string
+  folderId: string | null  // Allow null
   createdAt: string
 }
 
@@ -63,14 +64,19 @@ interface WorkspaceState {
   setActiveWindow: (id: string) => void
 
   // Session management
-  addSession: (sessionData: Omit<Session, "id" | "createdAt" | "stats">) => Promise<string>
+  addSession: (sessionData: Omit<Session, "id" | "createdAt" | "stats">, token?: string, userId?: string) => Promise<string>
   updateSession: (id: string, data: Partial<Session>) => void
+  updateSessionStats: (id: string, stats: Session['stats']) => void
   deleteSession: (id: string) => void
   setActiveSession: (id: string | null) => void
   loadSession: (id: string) => void
 
+  // Security: Filter sessions by user
+  getUserSessions: (userId: string) => Session[]
+  clearUserData: () => void
+
   // Project management
-  addProject: (name: string, folderId: string) => string
+  addProject: (name: string, folderId: string | null) => string
   updateProject: (id: string, data: Partial<Project>) => void
   deleteProject: (id: string) => void
   setActiveProject: (id: string | null) => void
@@ -81,7 +87,9 @@ interface WorkspaceState {
   deleteFolder: (id: string) => void
 
   // Stats and metrics
-  getSessionStats: (days: number) => {
+  userStats: any | null
+  isLoadingStats: boolean
+  getSessionStats: (days: number, userId?: string) => {
     avgWpm: number
     avgScore: number
     totalSessions: number
@@ -92,23 +100,15 @@ interface WorkspaceState {
     scoreData: { name: string; value: number }[]
     topicData: { name: string; value: number }[]
   }
-}
-
-// Helper function to generate mock data for charts
-const generateMockChartData = (count: number, min: number, max: number) => {
-  return Array.from({ length: count }, (_, i) => ({
-    name: `Sesión ${i + 1}`,
-    value: Math.floor(Math.random() * (max - min + 1)) + min,
-  }))
-}
-
-// Helper function to generate mock topic distribution data
-const generateMockTopicData = () => {
-  const topics = ["Historia", "Ciencia", "Tecnología", "Literatura", "Arte"]
-  return topics.map((topic) => ({
-    name: topic,
-    value: Math.floor(Math.random() * 30) + 10,
-  }))
+  
+  // Load real stats from API
+  loadStatsFromAPI: (token: string, userId?: string) => Promise<void>
+  
+  // Get stats for history/dashboard view
+  getStatsHistory: () => any | null
+  
+  // Refresh stats manually
+  refreshStats: (token: string, userId?: string) => Promise<void>
 }
 
 export const useWorkspaceStore = create<WorkspaceState>()(
@@ -116,122 +116,13 @@ export const useWorkspaceStore = create<WorkspaceState>()(
     (set, get) => ({
       windows: [],
       activeWindow: null,
-      sessions: [
-        {
-          id: "session-1",
-          title: "Introducción a la Energía Solar",
-          topic: "Energía Solar",
-          text: "La energía solar es una fuente de energía renovable que se obtiene del sol...",
-          folderId: "folder-1",
-          type: "generate",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-          stats: {
-            wpm: 320,
-            totalTime: 45000,
-            idealTime: 30000,
-            score: 85,
-            feedback: "Buen rendimiento en la lectura de este tema técnico.",
-          },
-        },
-        {
-          id: "session-2",
-          title: "Historia de Roma",
-          topic: "Historia",
-          text: "La historia de Roma comienza con la fundación de la ciudad...",
-          folderId: "folder-1",
-          type: "generate",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-          stats: {
-            wpm: 290,
-            totalTime: 60000,
-            idealTime: 45000,
-            score: 78,
-            feedback: "Buena comprensión de los eventos históricos.",
-          },
-        },
-        {
-          id: "session-3",
-          title: "Inteligencia Artificial",
-          topic: "Tecnología",
-          text: "La inteligencia artificial es la simulación de procesos de inteligencia humana...",
-          folderId: "folder-2",
-          type: "generate",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
-          stats: {
-            wpm: 350,
-            totalTime: 40000,
-            idealTime: 35000,
-            score: 92,
-            feedback: "Excelente comprensión de conceptos técnicos complejos.",
-          },
-        },
-        {
-          id: "session-4",
-          title: "Literatura Contemporánea",
-          topic: "Literatura",
-          text: "La literatura contemporánea abarca obras escritas después de la Segunda Guerra Mundial...",
-          folderId: "folder-2",
-          type: "generate",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(), // 5 days ago
-          stats: {
-            wpm: 310,
-            totalTime: 50000,
-            idealTime: 40000,
-            score: 88,
-            feedback: "Buena comprensión de los movimientos literarios.",
-          },
-        },
-        {
-          id: "session-5",
-          title: "Cambio Climático",
-          topic: "Ciencia",
-          text: "El cambio climático se refiere a cambios a largo plazo en las temperaturas y los patrones climáticos...",
-          folderId: null,
-          type: "generate",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(), // 10 days ago
-          stats: {
-            wpm: 300,
-            totalTime: 55000,
-            idealTime: 45000,
-            score: 82,
-            feedback: "Buena comprensión de los conceptos científicos.",
-          },
-        },
-      ],
+      sessions: [], // Iniciar sin datos dummy
       activeSession: null,
-      projects: [
-        {
-          id: "project-1",
-          name: "Ciencias Naturales",
-          folderId: "folder-1",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-        },
-        {
-          id: "project-2",
-          name: "Historia Universal",
-          folderId: "folder-1",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(),
-        },
-        {
-          id: "project-3",
-          name: "Tecnología e Innovación",
-          folderId: "folder-2",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 15).toISOString(),
-        },
-      ],
+      projects: [], // Iniciar sin datos dummy
       activeProject: null,
-      folders: [
-        {
-          id: "folder-1",
-          name: "Educación",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-        },
-        {
-          id: "folder-2",
-          name: "Trabajo",
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25).toISOString(),
-        },
-      ],
+      folders: [], // Iniciar sin datos dummy
+      userStats: null,
+      isLoadingStats: false,
 
       addWindow: (type, data) => {
         const id = `${type}-${Date.now()}`
@@ -302,30 +193,63 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ activeWindow: id })
       },
 
-      addSession: async (sessionData) => {
-        const id = `session-${Date.now()}`
-        const newSession: Session = {
-          id,
-          ...sessionData,
-          createdAt: new Date().toISOString(),
-        }
-
+      addSession: async (sessionData, token, userId) => {
         // If it's a generate type, fetch content from API
-        if (sessionData.type === "generate") {
+        if (sessionData.type === "generate" && token) {
           try {
-            const data = await generateRSVPContent(sessionData.topic)
-            newSession.text = data.text
-          } catch (error) {
-            console.error("Error generating content:", error)
+            console.log('🎯 Creando sesión RSVP para tema:', sessionData.topic)
+            // Use the real API to create RSVP session
+            const data = await rsvpApi.createRsvp({ topic: sessionData.topic }, token)
+            const newSession: Session = {
+              id: data.id, // Use real backend ID
+              title: sessionData.title || `Sesión sobre ${sessionData.topic}`,
+              topic: sessionData.topic,
+              text: data.text,
+              folderId: sessionData.folderId,
+              type: "generate",
+              createdAt: new Date().toISOString(),
+              userId: userId, // Asignar userId para filtrado de seguridad
+            }
+
+            set((state) => ({
+              sessions: [newSession, ...state.sessions],
+              activeSession: data.id,
+            }))
+
+            console.log('✅ Sesión RSVP creada exitosamente:', data.id)
+            return data.id
+          } catch (error: any) {
+            console.error("Error creating RSVP session:", error)
+            
+            // Si es un error de autenticación (401), el token probablemente expiró
+            if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+              console.log('🔒 Token expirado detectado en addSession')
+              // Lanzar error específico para que el componente lo maneje
+              throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+            }
+            
+            throw error
           }
+        } else if (sessionData.type === "custom") {
+          // For custom text, create session without API call
+          const id = `custom-${Date.now()}`
+          const newSession: Session = {
+            id,
+            ...sessionData,
+            createdAt: new Date().toISOString(),
+            userId: userId, // Asignar userId para filtrado de seguridad
+          }
+
+          set((state) => ({
+            sessions: [newSession, ...state.sessions],
+            activeSession: id,
+          }))
+
+          console.log('✅ Sesión personalizada creada:', id)
+          return id
         }
 
-        set((state) => ({
-          sessions: [newSession, ...state.sessions],
-          activeSession: id,
-        }))
-
-        return id
+        throw new Error("Token required for generate type sessions")
       },
 
       updateSession: (id, data) => {
@@ -337,6 +261,20 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             return session
           }),
         }))
+      },
+
+      updateSessionStats: (id, stats) => {
+        set((state) => ({
+          sessions: state.sessions.map((session) => {
+            if (session.id === id) {
+              return { ...session, stats }
+            }
+            return session
+          }),
+        }))
+        
+        // Trigger a stats refresh for real-time updates
+        console.log(`📊 Estadísticas actualizadas para sesión ${id}:`, stats)
       },
 
       deleteSession: (id) => {
@@ -463,12 +401,18 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }))
       },
 
-      getSessionStats: (days) => {
+      getSessionStats: (days, userId) => {
         const now = new Date()
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
 
+        // CORREGIDO: Usar sesiones filtradas por usuario si se proporciona userId
+        let allSessions = get().sessions
+        if (userId) {
+          allSessions = allSessions.filter(session => session.userId === userId)
+        }
+
         // Filter sessions within the time range
-        const filteredSessions = get().sessions.filter((session) => {
+        const filteredSessions = allSessions.filter((session) => {
           const sessionDate = new Date(session.createdAt)
           return sessionDate >= startDate && sessionDate <= now && session.stats
         })
@@ -481,14 +425,63 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         const avgWpm = filteredSessions.length > 0 ? Math.round(totalWpm / filteredSessions.length) : 0
         const avgScore = filteredSessions.length > 0 ? Math.round(totalScore / filteredSessions.length) : 0
 
-        // Generate mock improvement data
-        const wpmImprovement = Math.floor(Math.random() * 15) + 5
-        const scoreImprovement = Math.floor(Math.random() * 10) + 2
+        // Calculate improvement based on actual data
+        const sortedSessions = filteredSessions.sort((a, b) => 
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+        
+        const firstHalf = sortedSessions.slice(0, Math.floor(sortedSessions.length / 2))
+        const secondHalf = sortedSessions.slice(Math.floor(sortedSessions.length / 2))
+        
+        const firstHalfAvgWpm = firstHalf.length > 0 ? 
+          firstHalf.reduce((sum, s) => sum + (s.stats?.wpm || 0), 0) / firstHalf.length : 0
+        const secondHalfAvgWpm = secondHalf.length > 0 ? 
+          secondHalf.reduce((sum, s) => sum + (s.stats?.wpm || 0), 0) / secondHalf.length : 0
+          
+        const firstHalfAvgScore = firstHalf.length > 0 ? 
+          firstHalf.reduce((sum, s) => sum + (s.stats?.score || 0), 0) / firstHalf.length : 0
+        const secondHalfAvgScore = secondHalf.length > 0 ? 
+          secondHalf.reduce((sum, s) => sum + (s.stats?.score || 0), 0) / secondHalf.length : 0
 
-        // Generate chart data
-        const wpmData = generateMockChartData(10, 200, 400)
-        const scoreData = generateMockChartData(10, 60, 100)
-        const topicData = generateMockTopicData()
+        const wpmImprovement = firstHalfAvgWpm > 0 ? Math.round(((secondHalfAvgWpm - firstHalfAvgWpm) / firstHalfAvgWpm) * 100) : 0
+        const scoreImprovement = firstHalfAvgScore > 0 ? Math.round(((secondHalfAvgScore - firstHalfAvgScore) / firstHalfAvgScore) * 100) : 0
+
+        // Generate chart data from real sessions with better temporal information
+        const sortedSessionsForCharts = filteredSessions
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          .slice(-20) // Last 20 sessions for better chart readability
+
+        const wpmData = sortedSessionsForCharts.map((session, index) => ({
+          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          value: session.stats?.wpm || 0,
+          fullDate: session.createdAt,
+          sessionId: session.id
+        }))
+
+        const scoreData = sortedSessionsForCharts.map((session, index) => ({
+          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+          value: session.stats?.score || 0,
+          fullDate: session.createdAt,
+          sessionId: session.id
+        }))
+
+        // Topic distribution from real data with better sorting
+        const topicCounts = filteredSessions.reduce((acc, session) => {
+          const topic = session.topic || "Sin categoría"
+          acc[topic] = (acc[topic] || 0) + 1
+          return acc
+        }, {} as Record<string, number>)
+
+        const topicData = Object.entries(topicCounts)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value) // Sort by frequency
+          .slice(0, 8) // Top 8 topics for better visualization
 
         return {
           avgWpm,
@@ -497,10 +490,163 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           totalTime: Math.round(totalTime / 1000), // Convert to seconds
           wpmImprovement,
           scoreImprovement,
-          wpmData,
-          scoreData,
-          topicData,
+          wpmData: wpmData.length > 0 ? wpmData : [],
+          scoreData: scoreData.length > 0 ? scoreData : [],
+          topicData: topicData.length > 0 ? topicData : [],
         }
+      },
+
+      loadStatsFromAPI: async (token: string, userId?: string) => {
+        console.log('🔄 Cargando estadísticas desde API para usuario:', userId)
+        set({ isLoadingStats: true })
+        try {
+          const statsData = await rsvpApi.getStats(token)
+          set({ userStats: statsData, isLoadingStats: false })
+
+          // If a userId is provided, sync their sessions from the API
+          if (userId) {
+            if (statsData.recent_sessions_stats) {
+              // Map API sessions, preserving full text if it exists locally
+              const apiSessions: Session[] = statsData.recent_sessions_stats.map((apiSession) => {
+                const existingSession = get().sessions.find(s => s.id === apiSession.session_id)
+                
+                const text = (existingSession && existingSession.text && existingSession.text.length > (apiSession.text_snippet?.length || 0))
+                             ? existingSession.text
+                             : (apiSession.text_snippet || "");
+
+                return {
+                  id: apiSession.session_id,
+                  title: apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+                  topic: apiSession.topic || "Lectura general",
+                  text: text, // Use preserved or snippet text
+                  folderId: null,
+                  type: "generate" as const,
+                  createdAt: apiSession.created_at,
+                  userId: userId,
+                  stats: {
+                    wpm: apiSession.wpm,
+                    totalTime: apiSession.reading_time_seconds * 1000,
+                    idealTime: apiSession.ai_estimated_ideal_reading_time_seconds * 1000,
+                    score: apiSession.quiz_score,
+                    feedback: `Dificultad: ${apiSession.ai_text_difficulty}`,
+                  },
+                }
+              })
+
+              // Get sessions belonging to other users to keep them in the store
+              const otherUserSessions = get().sessions.filter(s => s.userId !== userId)
+
+              // The new state is the other users' sessions plus the updated sessions for the current user
+              const finalSessions = [...otherUserSessions, ...apiSessions]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+              set({ sessions: finalSessions })
+              console.log(`✅ Cargadas y sincronizadas ${apiSessions.length} sesiones desde API para usuario ${userId}`)
+            } else {
+              // If API returns no sessions, clear only the current user's sessions
+              const otherUserSessions = get().sessions.filter(s => s.userId !== userId)
+              set({ sessions: otherUserSessions })
+              console.log(`ℹ️ No hay sesiones en la API para ${userId}, limpiando sus sesiones locales.`)
+            }
+          }
+        } catch (error: any) {
+          console.error("Error loading stats from API:", error)
+          set({ isLoadingStats: false })
+          
+          if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+            console.log('🔒 Token expirado detectado en loadStatsFromAPI, limpiando estado')
+          }
+        }
+      },
+
+      getStatsHistory: () => {
+        const state = get()
+        return state.userStats
+      },
+
+      refreshStats: async (token: string, userId?: string) => {
+        set({ isLoadingStats: true })
+        try {
+          console.log('🔄 Refrescando estadísticas para usuario:', userId)
+          const statsData = await rsvpApi.getStats(token)
+          set({ userStats: statsData, isLoadingStats: false })
+          
+          if (userId) {
+            if (statsData.recent_sessions_stats) {
+              const sessionsMap = new Map(get().sessions.map(s => [s.id, s]));
+
+              statsData.recent_sessions_stats.forEach(apiSession => {
+                const existingSession = sessionsMap.get(apiSession.session_id);
+                
+                const text = (existingSession && existingSession.text && existingSession.text.length > (apiSession.text_snippet?.length || 0))
+                             ? existingSession.text
+                             : (apiSession.text_snippet || "");
+
+                const sessionData: Session = {
+                  id: apiSession.session_id,
+                  title: apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+                  topic: apiSession.topic || "Lectura general",
+                  text: text, // Use preserved or snippet text
+                  folderId: existingSession?.folderId || null,
+                  type: "generate" as const,
+                  createdAt: apiSession.created_at,
+                  userId: userId,
+                  stats: {
+                    wpm: apiSession.wpm,
+                    totalTime: apiSession.reading_time_seconds * 1000,
+                    idealTime: apiSession.ai_estimated_ideal_reading_time_seconds * 1000,
+                    score: apiSession.quiz_score,
+                    feedback: `Dificultad: ${apiSession.ai_text_difficulty}`,
+                  },
+                };
+                sessionsMap.set(apiSession.session_id, sessionData);
+              });
+
+              const finalSessions = Array.from(sessionsMap.values())
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+              set({ sessions: finalSessions });
+              console.log(`✅ Refrescadas y sincronizadas ${statsData.recent_sessions_stats.length} sesiones. Total ahora: ${finalSessions.length}`);
+            } else {
+              console.log('ℹ️ No hay sesiones en la API durante refresh, no se realizarán cambios en las sesiones.');
+            }
+          }
+        } catch (error: any) {
+          console.error("Error refreshing stats:", error)
+          set({ isLoadingStats: false })
+          
+          if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
+            console.log('🔒 Token expirado detectado en refreshStats, limpiando estado')
+          }
+        }
+      },
+
+      // FUNCIONES DE SEGURIDAD: Filtrado por usuario
+      getUserSessions: (userId: string) => {
+        return get().sessions.filter(session => session.userId === userId)
+      },
+
+      clearUserData: () => {
+        console.log('🧹 Limpiando TODOS los datos del workspace')
+        set({
+          // Limpiar sesiones y contenido relacionado
+          sessions: [],
+          activeSession: null,
+          
+          // Limpiar ventanas y estado visual
+          windows: [],
+          activeWindow: null,
+          
+          // Limpiar estadísticas y métricas
+          userStats: null,
+          isLoadingStats: false,
+          
+          // Limpiar proyectos y estructura organizacional
+          projects: [],
+          activeProject: null,
+          folders: [],
+        })
+        console.log('✅ Workspace completamente limpio')
       },
     }),
     {
@@ -512,37 +658,37 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 function getDefaultWidth(type: string): number {
   switch (type) {
     case "topic":
-      return 500
+      return 420  // Reducido de 500
     case "reader":
-      return 600
+      return 480  // Reducido de 600
     case "quiz":
-      return 650
+      return 520  // Reducido de 650
     case "stats":
-      return 700
+      return 550  // Reducido de 700
     case "assistant":
-      return 450
+      return 400  // Reducido de 450
     case "paragraph":
-      return 700
+      return 550  // Reducido de 700
     default:
-      return 500
+      return 420  // Reducido de 500
   }
 }
 
 function getDefaultHeight(type: string): number {
   switch (type) {
     case "topic":
-      return 400
+      return 350  // Reducido de 400
     case "reader":
-      return 450
+      return 400  // Reducido de 450
     case "quiz":
-      return 550
+      return 480  // Reducido de 550
     case "stats":
-      return 600
+      return 520  // Reducido de 600
     case "assistant":
-      return 500
+      return 450  // Reducido de 500
     case "paragraph":
-      return 500
+      return 450  // Reducido de 500
     default:
-      return 400
+      return 350  // Reducido de 400
   }
 }

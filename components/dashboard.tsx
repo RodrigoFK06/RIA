@@ -10,9 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { BookOpen, BarChart3, History, Sparkles, Clock, TrendingUp, Brain, PlusCircle } from "lucide-react"
+import { BookOpen, BarChart3, History, Sparkles, Clock, TrendingUp, Brain, PlusCircle, Activity } from "lucide-react"
 import MetricsOverview from "@/components/metrics-overview"
 import RecentSessions from "@/components/recent-sessions"
+import StatsHistory from "@/components/stats-history"
+import { useBreakpoint } from "@/hooks/use-breakpoint"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -35,8 +38,9 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
   const [newProjectFolder, setNewProjectFolder] = useState("")
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false)
   const { addSession, folders, addProject } = useWorkspaceStore()
-  const { user } = useAuthStore()
+  const { user, token } = useAuthStore()
   const { toast } = useToast()
+  const { isMobile, isTablet } = useBreakpoint()
 
   const handleCreateSession = async (type: "generate" | "custom") => {
     if (type === "generate" && !topic.trim()) {
@@ -58,14 +62,14 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
     }
 
     try {
-      // Create a new session
+      // Create a new session - PASAR userId PARA FILTRADO DE SEGURIDAD
       const sessionId = await addSession({
         title: type === "generate" ? topic : "Texto personalizado",
         topic: type === "generate" ? topic : "Personalizado",
         text: type === "custom" ? customText : "",
         folderId: selectedFolder || null,
         type,
-      })
+      }, token || undefined, user?.id)
 
       toast({
         title: "Sesión creada",
@@ -74,12 +78,23 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
 
       // Switch to workspace view
       setActiveView("workspace")
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Hubo un error al crear la sesión. Inténtalo de nuevo.",
-        variant: "destructive",
-      })
+    } catch (error: any) {
+      console.error('Error creating session:', error)
+      
+      // Manejar específicamente errores de token expirado
+      if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized') || error?.message?.includes('Token expirado')) {
+        toast({
+          title: "Sesión expirada",
+          description: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "Hubo un error al crear la sesión. Inténtalo de nuevo.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -94,7 +109,7 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
     }
 
     try {
-      addProject(newProjectName, newProjectFolder || folders[0]?.id || "")
+      addProject(newProjectName, newProjectFolder || folders[0]?.id || null)
       setNewProjectName("")
       setNewProjectFolder("")
       setIsNewProjectDialogOpen(false)
@@ -112,25 +127,29 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
   }
 
   return (
-    <div className="flex-1 overflow-auto p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">RIA - Lector Inteligente RSVP</h1>
+    <div className={cn("flex-1 overflow-auto", isMobile ? "p-4" : "p-6")}>
+      <div className={cn("mx-auto space-y-6", isMobile ? "max-w-full" : "max-w-6xl")}>
+        <div className={cn("flex items-center", isMobile ? "flex-col space-y-4" : "justify-between")}>
+          <h1 className={cn("font-bold", isMobile ? "text-xl text-center" : "text-2xl")}>RIA - Lector Inteligente RSVP</h1>
           <div className="flex items-center gap-2">
             <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-1">
-                  <PlusCircle className="h-4 w-4" /> Nuevo Proyecto
+                <Button 
+                  variant="outline" 
+                  className={cn("flex items-center gap-1", isMobile && "w-full")}
+                  size={isMobile ? "default" : "default"}
+                >
+                  <PlusCircle className="h-4 w-4" /> {isMobile ? "Proyecto" : "Nuevo Proyecto"}
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className={isMobile ? "w-[95vw] max-w-md" : ""}>
                 <DialogHeader>
-                  <DialogTitle>Crear nuevo proyecto</DialogTitle>
-                  <DialogDescription>Crea un nuevo proyecto para organizar tus sesiones de lectura.</DialogDescription>
+                  <DialogTitle className={isMobile ? "text-lg" : ""}>Crear nuevo proyecto</DialogTitle>
+                  <DialogDescription className={isMobile ? "text-sm" : ""}>Crea un nuevo proyecto para organizar tus sesiones de lectura.</DialogDescription>
                 </DialogHeader>
-                <div className="py-4 space-y-4">
+                <div className={cn("space-y-4", isMobile ? "py-3" : "py-4")}>
                   <div className="space-y-2">
-                    <label htmlFor="projectName" className="text-sm font-medium">
+                    <label htmlFor="projectName" className={cn("font-medium", isMobile ? "text-sm" : "text-sm")}>
                       Nombre del proyecto
                     </label>
                     <Input
@@ -138,14 +157,15 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
                       placeholder="Ej: Estudio de Historia"
                       value={newProjectName}
                       onChange={(e) => setNewProjectName(e.target.value)}
+                      className={isMobile ? "text-base" : ""}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="projectFolder" className="text-sm font-medium">
+                    <label htmlFor="projectFolder" className={cn("font-medium", isMobile ? "text-sm" : "text-sm")}>
                       Carpeta
                     </label>
                     <Select value={newProjectFolder} onValueChange={setNewProjectFolder}>
-                      <SelectTrigger>
+                      <SelectTrigger className={isMobile ? "text-base" : ""}>
                         <SelectValue placeholder="Seleccionar carpeta" />
                       </SelectTrigger>
                       <SelectContent>
@@ -158,11 +178,20 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
                     </Select>
                   </div>
                 </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsNewProjectDialogOpen(false)}>
+                <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsNewProjectDialogOpen(false)}
+                    className={isMobile ? "w-full" : ""}
+                  >
                     Cancelar
                   </Button>
-                  <Button onClick={handleCreateProject}>Crear proyecto</Button>
+                  <Button 
+                    onClick={handleCreateProject}
+                    className={isMobile ? "w-full" : ""}
+                  >
+                    Crear proyecto
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -170,47 +199,60 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
         </div>
 
         <Tabs defaultValue="new" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="new" className="flex items-center gap-1">
-              <Sparkles className="h-4 w-4" /> Nueva Sesión
+          <TabsList className={cn("grid w-full", isMobile ? "grid-cols-2" : "grid-cols-4")}>
+            <TabsTrigger value="new" className={cn("flex items-center gap-1", isMobile && "text-sm px-2")}>
+              <Sparkles className="h-4 w-4" /> {isMobile ? "Nueva" : "Nueva Sesión"}
             </TabsTrigger>
-            <TabsTrigger value="metrics" className="flex items-center gap-1">
+            <TabsTrigger value="metrics" className={cn("flex items-center gap-1", isMobile && "text-sm px-2")}>
               <BarChart3 className="h-4 w-4" /> Métricas
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-1">
-              <History className="h-4 w-4" /> Historial
-            </TabsTrigger>
+            {!isMobile && (
+              <>
+                <TabsTrigger value="history" className="flex items-center gap-1">
+                  <History className="h-4 w-4" /> Historial
+                </TabsTrigger>
+                <TabsTrigger value="stats" className="flex items-center gap-1">
+                  <Activity className="h-4 w-4" /> Estadísticas
+                </TabsTrigger>
+              </>
+            )}
+            {isMobile && (
+              <TabsTrigger value="stats" className="flex items-center gap-1 text-sm px-2">
+                <Activity className="h-4 w-4" /> Stats
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="new" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={cn("grid gap-6", isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2")}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className={cn("flex items-center gap-2", isMobile && "text-lg")}>
                     <BookOpen className="h-5 w-5" />
                     Generar Contenido
                   </CardTitle>
-                  <CardDescription>Ingresa un tema para generar contenido educativo con IA</CardDescription>
+                  <CardDescription className={isMobile ? "text-sm" : ""}>Ingresa un tema para generar contenido educativo con IA</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="topic" className="text-sm font-medium">
+                    <label htmlFor="topic" className={cn("font-medium", isMobile ? "text-sm" : "text-sm")}>
                       Tema
                     </label>
                     <Input
                       id="topic"
-                      placeholder="Ej: Energía solar, Historia de Roma, Inteligencia Artificial..."
+                      placeholder={isMobile ? "Ej: Energía solar..." : "Ej: Energía solar, Historia de Roma, Inteligencia Artificial..."}
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
+                      className={isMobile ? "text-base" : ""}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="folder" className="text-sm font-medium">
+                    <label htmlFor="folder" className={cn("font-medium", isMobile ? "text-sm" : "text-sm")}>
                       Carpeta (opcional)
                     </label>
                     <Select value={selectedFolder} onValueChange={setSelectedFolder}>
-                      <SelectTrigger>
+                      <SelectTrigger className={isMobile ? "text-base" : ""}>
                         <SelectValue placeholder="Seleccionar carpeta" />
                       </SelectTrigger>
                       <SelectContent>
@@ -225,23 +267,28 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button onClick={() => handleCreateSession("generate")} disabled={!topic.trim()} className="w-full">
-                    Generar Contenido
+                  <Button 
+                    onClick={() => handleCreateSession("generate")} 
+                    disabled={!topic.trim()} 
+                    className="w-full"
+                    size={isMobile ? "default" : "default"}
+                  >
+                    {isMobile ? "Generar" : "Generar Contenido"}
                   </Button>
                 </CardFooter>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className={cn("flex items-center gap-2", isMobile && "text-lg")}>
                     <BookOpen className="h-5 w-5" />
                     Texto Personalizado
                   </CardTitle>
-                  <CardDescription>Usa tu propio texto para la lectura RSVP</CardDescription>
+                  <CardDescription className={isMobile ? "text-sm" : ""}>Usa tu propio texto para la lectura RSVP</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="customText" className="text-sm font-medium">
+                    <label htmlFor="customText" className={cn("font-medium", isMobile ? "text-sm" : "text-sm")}>
                       Texto Personalizado
                     </label>
                     <Textarea
@@ -313,6 +360,10 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
 
           <TabsContent value="history">
             <RecentSessions setActiveView={setActiveView} />
+          </TabsContent>
+
+          <TabsContent value="stats">
+            <StatsHistory />
           </TabsContent>
         </Tabs>
       </div>

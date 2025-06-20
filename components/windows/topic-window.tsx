@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Loader2, BookOpen, Upload } from "lucide-react"
 import { rsvpApi } from "@/lib/rsvpApi"
 import { useAuthStore } from "@/lib/auth-store"
+import { useBreakpoint } from "@/hooks/use-breakpoint"
 
 interface TopicWindowProps {
   windowData: {
@@ -27,6 +28,7 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
   const { addWindow } = useWorkspaceStore()
   const { toast } = useToast()
   const { token } = useAuthStore()
+  const { isMobile, isTablet } = useBreakpoint()
 
   const handleGenerateContent = async () => {
     if (!topic.trim()) {
@@ -97,52 +99,57 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
       initialWidth={windowData.position.width}
       initialHeight={windowData.position.height}
       initialX={windowData.position.x}
-      initialY={windowData.position.y}
-    >
+      initialY={windowData.position.y}    >
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">Generador de Contenido Educativo</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Generador de Contenido Educativo</h2>
+        <p className={`text-slate-500 dark:text-slate-400 ${isMobile ? 'text-xs' : 'text-sm'}`}>
           Ingresa un tema para generar contenido educativo o carga tu propio texto para la lectura RSVP.
         </p>
 
         <Tabs defaultValue="generate">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="generate" className="flex items-center gap-1">
-              <BookOpen className="h-4 w-4" /> Generar
+            <TabsTrigger value="generate" className={`flex items-center gap-1 ${isMobile ? 'text-sm px-3' : ''}`}>
+              <BookOpen className="h-4 w-4" /> {isMobile ? 'Generar' : 'Generar'}
             </TabsTrigger>
-            <TabsTrigger value="custom" className="flex items-center gap-1">
-              <Upload className="h-4 w-4" /> Texto Propio
+            <TabsTrigger value="custom" className={`flex items-center gap-1 ${isMobile ? 'text-sm px-3' : ''}`}>
+              <Upload className="h-4 w-4" /> {isMobile ? 'Propio' : 'Texto Propio'}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="generate" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <label htmlFor="topic" className="text-sm font-medium">
+              <label htmlFor="topic" className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>
                 Tema
               </label>
               <Input
                 id="topic"
-                placeholder="Ej: Energía solar, Historia de Roma, Inteligencia Artificial..."
+                placeholder={isMobile ? "Ej: Energía solar..." : "Ej: Energía solar, Historia de Roma, Inteligencia Artificial..."}
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
+                className={isMobile ? 'text-base' : ''}
               />
             </div>
 
-            <Button onClick={handleGenerateContent} disabled={isLoading || !topic.trim()} className="w-full">
+            <Button 
+              onClick={handleGenerateContent} 
+              disabled={isLoading || !topic.trim()} 
+              className="w-full"
+              size={isMobile ? "default" : "default"}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generando...
+                  {isMobile ? 'Generando...' : 'Generando...'}
                 </>
               ) : (
-                "Generar Contenido"
+                isMobile ? 'Generar' : 'Generar Contenido'
               )}
             </Button>
           </TabsContent>
 
           <TabsContent value="custom" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <label htmlFor="customText" className="text-sm font-medium">
+              <label htmlFor="customText" className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>
                 Texto Personalizado
               </label>
               <Textarea
@@ -150,12 +157,17 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
                 placeholder="Pega o escribe aquí tu texto personalizado..."
                 value={customText}
                 onChange={(e) => setCustomText(e.target.value)}
-                className="min-h-[150px]"
+                className={`${isMobile ? 'min-h-[120px] text-base' : 'min-h-[150px]'}`}
               />
             </div>
 
-            <Button onClick={handleUseCustomText} disabled={!customText.trim()} className="w-full">
-              Usar Texto Personalizado
+            <Button 
+              onClick={handleUseCustomText} 
+              disabled={!customText.trim()} 
+              className="w-full"
+              size={isMobile ? "default" : "default"}
+            >
+              {isMobile ? 'Usar Texto' : 'Usar Texto Personalizado'}
             </Button>
           </TabsContent>
         </Tabs>

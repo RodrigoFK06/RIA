@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { User, Lock, Bell, Globe, ArrowLeft } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { IDLE_TIMEOUTS, updateIdleTimeout } from "@/components/idle-manager"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
@@ -35,6 +36,13 @@ const passwordFormSchema = z
 
 export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [idleTimeout, setIdleTimeout] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('idle_timeout')
+      return saved ? parseInt(saved) : IDLE_TIMEOUTS.MEDIUM
+    }
+    return IDLE_TIMEOUTS.MEDIUM
+  })
   const router = useRouter()
   const { user, updateProfile, updatePassword, isAuthenticated } = useAuthStore()
   const { toast } = useToast()
@@ -80,7 +88,6 @@ export default function SettingsPage() {
       setIsLoading(false)
     }
   }
-
   async function onPasswordSubmit(values: z.infer<typeof passwordFormSchema>) {
     setIsLoading(true)
     try {
@@ -99,6 +106,16 @@ export default function SettingsPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleIdleTimeoutChange = (value: string) => {
+    const timeout = parseInt(value)
+    setIdleTimeout(timeout)
+    updateIdleTimeout(timeout)
+    toast({
+      title: "Configuración actualizada",
+      description: `Tiempo de inactividad configurado a ${timeout / (60 * 1000)} minutos`,
+    })
   }
 
   if (!user) {
@@ -316,7 +333,30 @@ export default function SettingsPage() {
                       <SelectItem value="de">Deutsch</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </div>              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <label htmlFor="idleTimeout" className="text-sm font-medium">
+                  Tiempo de inactividad antes de cerrar sesión
+                </label>
+                <Select 
+                  value={idleTimeout.toString()} 
+                  onValueChange={handleIdleTimeoutChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tiempo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={IDLE_TIMEOUTS.SHORT.toString()}>15 minutos</SelectItem>
+                    <SelectItem value={IDLE_TIMEOUTS.MEDIUM.toString()}>30 minutos</SelectItem>
+                    <SelectItem value={IDLE_TIMEOUTS.LONG.toString()}>60 minutos</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Tu sesión se cerrará automáticamente después de este tiempo de inactividad por seguridad
+                </p>
               </div>
 
               <Separator />

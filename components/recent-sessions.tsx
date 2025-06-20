@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useWorkspaceStore } from "@/lib/store"
+import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,10 +21,14 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("date")
   const [filterFolder, setFilterFolder] = useState("")
-  const { sessions, folders, setActiveSession, deleteSession } = useWorkspaceStore()
+  const { folders, setActiveSession, deleteSession, getUserSessions } = useWorkspaceStore()
+  const { user } = useAuthStore()
 
-  // Filter and sort sessions
-  const filteredSessions = sessions
+  // CRÍTICO: Usar solo sesiones del usuario actual para evitar contaminación de datos
+  const userSessions = user?.id ? getUserSessions(user.id) : []
+
+  // Filter and sort sessions - USANDO SESIONES FILTRADAS POR USUARIO
+  const filteredSessions = userSessions
     .filter((session) => {
       const matchesSearch = searchQuery
         ? session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

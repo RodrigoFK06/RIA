@@ -73,7 +73,7 @@ export interface StatsResponse {
   user_id: string
   overall_stats: {
     total_sessions_read: number
-    total_reading_time_seconds: number
+  total_reading_time_seconds: number
     total_words_read: number
     average_wpm: number
     total_quizzes_taken: number
@@ -90,6 +90,7 @@ export interface StatsResponse {
     ai_text_difficulty: string
     ai_estimated_ideal_reading_time_seconds: number
     created_at: string
+    topic?: string // Topic real de la sesión (opcional por compatibilidad)
   }[]
   personalized_feedback: string | null
 }
@@ -103,19 +104,38 @@ export interface AssistantResponse {
   response: string
 }
 
+export interface UpdateProfileRequest {
+  full_name: string
+  email: string
+}
+
+export interface UpdatePasswordRequest {
+  current_password: string
+  new_password: string
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 async function request<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: Omit<RequestInit, 'body'> & { body?: any } = {},
   token?: string,
 ): Promise<T> {
   const headers: HeadersInit = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
-  if (options.body && typeof options.body !== 'string') {
-    options.body = JSON.stringify(options.body)
+  
+  const requestOptions: RequestInit = {
+    ...options,
+    headers,
   }
-  const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers })
+  
+  if (options.body && typeof options.body !== 'string') {
+    requestOptions.body = JSON.stringify(options.body)
+  } else if (options.body) {
+    requestOptions.body = options.body
+  }
+  
+  const res = await fetch(`${API_URL}${endpoint}`, requestOptions)
   if (!res.ok) {
     let detail: string | undefined
     try {
@@ -124,7 +144,20 @@ async function request<T>(
     } catch {
       detail = res.statusText
     }
-    throw new Error(detail)
+    
+    // Crear un error más descriptivo que incluya el código de estado
+    const error = new Error(detail) as any
+    error.status = res.status
+    error.statusText = res.statusText
+    
+    console.error(`❌ API Error [${res.status}]:`, {
+      endpoint,
+      status: res.status,
+      statusText: res.statusText,
+      detail
+    })
+    
+    throw error
   }
   return res.json()
 }
@@ -135,6 +168,10 @@ export const rsvpApi = {
   login: (data: LoginRequest) =>
     request<LoginResponse>('/auth/login', { method: 'POST', body: data }),
   me: (token: string) => request<User>('/auth/me', { method: 'GET' }, token),
+  updateProfile: (data: UpdateProfileRequest, token: string) =>
+    request<User>('/auth/profile', { method: 'PUT', body: data }, token),
+  updatePassword: (data: UpdatePasswordRequest, token: string) =>
+    request<{ message: string }>('/auth/password', { method: 'PUT', body: data }, token),
   createRsvp: (data: RsvpRequest, token: string) =>
     request<RsvpSession>('/api/rsvp', { method: 'POST', body: data }, token),
   getRsvp: (id: string, token: string) =>

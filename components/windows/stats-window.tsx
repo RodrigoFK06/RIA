@@ -7,6 +7,7 @@ import { useWorkspaceStore } from "@/lib/store"
 import { BarChart, BookOpen, MessageSquare, Share2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatsResponse, QuizValidateResponse, QuizQuestion } from "@/lib/rsvpApi"
+import { useBreakpoint } from "@/hooks/use-breakpoint"
 
 interface StatsWindowProps {
   windowData: {
@@ -26,6 +27,7 @@ interface StatsWindowProps {
 
 export default function StatsWindow({ windowData }: StatsWindowProps) {
   const { addWindow } = useWorkspaceStore()
+  const { isMobile, isTablet } = useBreakpoint()
 
   const stats = windowData.data?.stats
   const overall = stats?.overall_stats
@@ -53,89 +55,93 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
       initialWidth={windowData.position.width}
       initialHeight={windowData.position.height}
       initialX={windowData.position.x}
-      initialY={windowData.position.y}
-    >
+      initialY={windowData.position.y}    >
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold">Estadísticas y Feedback</h2>
-          <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={handleOpenAssistant}>
+        <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'justify-between'}`}>
+          <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Estadísticas y Feedback</h2>
+          <Button 
+            variant="outline" 
+            size={isMobile ? "default" : "sm"}
+            className="flex items-center gap-1" 
+            onClick={handleOpenAssistant}
+          >
             <MessageSquare className="h-4 w-4" /> Asistente IA
           </Button>
         </div>
 
         <Tabs defaultValue="stats">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="stats" className="flex items-center gap-1">
-              <BarChart className="h-4 w-4" /> Estadísticas
+            <TabsTrigger value="stats" className={`flex items-center gap-1 ${isMobile ? 'text-sm' : ''}`}>
+              <BarChart className="h-4 w-4" /> {isMobile ? 'Stats' : 'Estadísticas'}
             </TabsTrigger>
-            <TabsTrigger value="feedback" className="flex items-center gap-1">
+            <TabsTrigger value="feedback" className={`flex items-center gap-1 ${isMobile ? 'text-sm' : ''}`}>
               <BookOpen className="h-4 w-4" /> Feedback
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="stats" className="space-y-4 mt-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-2'}`}>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Velocidad de Lectura</CardTitle>
+                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Velocidad de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{overall?.average_wpm ?? 0} WPM</div>
-                  <p className="text-xs text-slate-500 mt-1">Palabras por minuto</p>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.average_wpm ?? 0} WPM</div>
+                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Palabras por minuto</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Puntuación</CardTitle>
+                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Puntuación</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{score}%</div>
-                  <p className="text-xs text-slate-500 mt-1">Comprensión del texto</p>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{score}%</div>
+                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Comprensión del texto</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Tiempo de Lectura</CardTitle>
+                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Tiempo de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{overall ? Math.round(overall.total_reading_time_seconds) : 0}s</div>
-                  <p className="text-xs text-slate-500 mt-1">Tiempo total empleado</p>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall ? Math.round(overall.total_reading_time_seconds) : 0}s</div>
+                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Tiempo total empleado</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Tiempo Ideal</CardTitle>
+                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Sesiones</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{overall?.total_sessions_read ?? 0}</div>
-                  <p className="text-xs text-slate-500 mt-1">Sesiones completadas</p>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.total_sessions_read ?? 0}</div>
+                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Sesiones completadas</p>
                 </CardContent>
               </Card>
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle>Comparativa</CardTitle>
-                <CardDescription>Tu rendimiento comparado con el ideal</CardDescription>
+                <CardTitle className={isMobile ? 'text-base' : ''}>Comparativa</CardTitle>
+                <CardDescription className={isMobile ? 'text-sm' : ''}>Tu rendimiento comparado con el ideal</CardDescription>
               </CardHeader>
               <CardContent>
-                  <div className="h-[200px] flex items-end justify-center gap-16">
+                  <div className={`flex items-end justify-center gap-8 ${isMobile ? 'h-[150px]' : 'h-[200px]'}`}>
                     <div className="flex flex-col items-center">
                       <div
-                        className="w-16 bg-slate-200 dark:bg-slate-700 rounded-t-md"
-                        style={{ height: `${Math.min(180, (last?.reading_time_seconds ?? 0) * 3)}px` }}
+                        className={`bg-slate-200 dark:bg-slate-700 rounded-t-md ${isMobile ? 'w-12' : 'w-16'}`}
+                        style={{ height: `${Math.min(isMobile ? 120 : 180, (last?.reading_time_seconds ?? 0) * (isMobile ? 2 : 3))}px` }}
                       ></div>
-                      <span className="text-xs mt-2">Tu tiempo</span>
+                      <span className={`mt-2 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>Tu tiempo</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <div
-                        className="w-16 bg-green-200 dark:bg-green-700 rounded-t-md"
-                        style={{ height: `${Math.min(180, (last?.ai_estimated_ideal_reading_time_seconds ?? 0) * 3)}px` }}
+                        className={`bg-green-200 dark:bg-green-700 rounded-t-md ${isMobile ? 'w-12' : 'w-16'}`}
+                        style={{ height: `${Math.min(isMobile ? 120 : 180, (last?.ai_estimated_ideal_reading_time_seconds ?? 0) * (isMobile ? 2 : 3))}px` }}
                       ></div>
-                      <span className="text-xs mt-2">Tiempo ideal</span>
+                      <span className={`mt-2 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>Tiempo ideal</span>
                     </div>
                   </div>
               </CardContent>
@@ -145,16 +151,20 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
           <TabsContent value="feedback" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Feedback Personalizado</CardTitle>
-                <CardDescription>Análisis de tu desempeño generado por IA</CardDescription>
+                <CardTitle className={isMobile ? 'text-base' : ''}>Feedback Personalizado</CardTitle>
+                <CardDescription className={isMobile ? 'text-sm' : ''}>Análisis de tu desempeño generado por IA</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="prose dark:prose-invert max-w-none">
-                  <p>{stats?.personalized_feedback ?? "Sin feedback disponible"}</p>
+                <div className={`prose dark:prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
+                  <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback ?? "Sin feedback disponible"}</p>
                 </div>
 
-                <div className="mt-6 flex justify-end">
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
+                  <Button 
+                    variant="outline" 
+                    size={isMobile ? "default" : "sm"}
+                    className="flex items-center gap-1"
+                  >
                     <Share2 className="h-4 w-4" /> Compartir Resultados
                   </Button>
                 </div>
