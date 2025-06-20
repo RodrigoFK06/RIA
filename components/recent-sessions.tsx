@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { useWorkspaceStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
+import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -21,8 +22,9 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("date")
   const [filterFolder, setFilterFolder] = useState("")
-  const { folders, setActiveSession, deleteSession, getUserSessions } = useWorkspaceStore()
-  const { user } = useAuthStore()
+  const { folders, setActiveSession, deleteSessionById, getUserSessions } = useWorkspaceStore()
+  const { user, token } = useAuthStore()
+  const { toast } = useToast()
 
   // CRÍTICO: Usar solo sesiones del usuario actual para evitar contaminación de datos
   const userSessions = user?.id ? getUserSessions(user.id) : []
@@ -55,9 +57,17 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
     setActiveView("workspace")
   }
 
-  const handleDeleteSession = (e: React.MouseEvent, sessionId: string) => {
+  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation()
-    deleteSession(sessionId)
+    if (!token) return
+    const confirmed = window.confirm("¿Deseas eliminar esta sesión del historial?")
+    if (!confirmed) return
+    try {
+      await deleteSessionById(sessionId, token)
+      toast({ title: "Sesión eliminada", description: "La sesión ha sido eliminada correctamente" })
+    } catch (error) {
+      toast({ title: "Error", description: "No se pudo eliminar la sesión", variant: "destructive" })
+    }
   }
 
   return (

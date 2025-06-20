@@ -3,6 +3,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { rsvpApi } from "@/lib/rsvpApi"
+import { formatDateInLima } from "@/lib/utils"
 
 interface Window {
   id: string
@@ -21,6 +22,7 @@ interface Session {
   title: string
   topic: string
   text: string
+  words?: string[]
   folderId: string | null
   type: "generate" | "custom"
   createdAt: string
@@ -68,8 +70,9 @@ interface WorkspaceState {
   updateSession: (id: string, data: Partial<Session>) => void
   updateSessionStats: (id: string, stats: Session['stats']) => void
   deleteSession: (id: string) => void
+  deleteSessionById: (id: string, token: string) => Promise<void>
   setActiveSession: (id: string | null) => void
-  loadSession: (id: string) => void
+  loadSession: (id: string, token?: string) => Promise<void>
 
   // Security: Filter sessions by user
   getUserSessions: (userId: string) => Session[]
@@ -205,6 +208,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               title: sessionData.title || `Sesión sobre ${sessionData.topic}`,
               topic: sessionData.topic,
               text: data.text,
+              words: data.words,
               folderId: sessionData.folderId,
               type: "generate",
               createdAt: new Date().toISOString(),
@@ -236,6 +240,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           const newSession: Session = {
             id,
             ...sessionData,
+            words: sessionData.text.split(/\s+/).filter(word => word.length > 0),
             createdAt: new Date().toISOString(),
             userId: userId, // Asignar userId para filtrado de seguridad
           }
@@ -284,12 +289,61 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }))
       },
 
+      deleteSessionById: async (id, token) => {
+        try {
+          await rsvpApi.deleteRsvp(id, token)
+          set((state) => ({
+            sessions: state.sessions.filter((session) => session.id !== id),
+            activeSession: state.activeSession === id ? null : state.activeSession,
+          }))
+          console.log('✅ Sesión eliminada del servidor y estado:', id)
+        } catch (error) {
+          console.error('Error deleting session:', error)
+          throw error
+        }
+      },
+
       setActiveSession: (id) => {
         set({ activeSession: id })
       },
 
-      loadSession: (id) => {
-        const session = get().sessions.find((s) => s.id === id)
+      loadSession: async (id, token) => {
+        let session = get().sessions.find((s) => s.id === id)
+
+        if (token) {
+          try {
+            const apiSession = await rsvpApi.getRsvp(id, token)
+            if (apiSession) {
+              const updated: Session = {
+                id: apiSession.id,
+                title: session?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at || new Date().toISOString())})`,
+                topic: apiSession.topic || session?.topic || 'Lectura',
+                text: apiSession.text,
+                words: apiSession.words,
+                folderId: session?.folderId || null,
+                type: 'generate',
+                createdAt: apiSession.created_at || session?.createdAt || new Date().toISOString(),
+                userId: session?.userId,
+                stats: {
+                  wpm: apiSession.wpm || session?.stats?.wpm || 0,
+                  totalTime: (apiSession.reading_time_seconds || 0) * 1000,
+                  idealTime: (apiSession.ai_estimated_ideal_reading_time_seconds || 0) * 1000,
+                  score: apiSession.quiz_score || session?.stats?.score || 0,
+                  feedback: `Dificultad: ${apiSession.ai_text_difficulty || ''}`,
+                },
+              }
+
+              set((state) => ({
+                sessions: state.sessions.map((s) => (s.id === id ? updated : s)),
+              }))
+
+              session = updated
+            }
+          } catch (err) {
+            console.error('Error fetching session details:', err)
+          }
+        }
+
         if (!session) return
 
         // Clear existing windows
@@ -452,20 +506,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           .slice(-20) // Last 20 sessions for better chart readability
 
         const wpmData = sortedSessionsForCharts.map((session, index) => ({
-          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
+          name: formatDateInLima(session.createdAt),
           value: session.stats?.wpm || 0,
           fullDate: session.createdAt,
           sessionId: session.id
         }))
 
         const scoreData = sortedSessionsForCharts.map((session, index) => ({
-          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
+          name: formatDateInLima(session.createdAt),
           value: session.stats?.score || 0,
           fullDate: session.createdAt,
           sessionId: session.id
@@ -506,20 +554,25 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           // If a userId is provided, sync their sessions from the API
           if (userId) {
             if (statsData.recent_sessions_stats) {
-              // Map API sessions, preserving full text if it exists locally
+              // Map API sessions, preservando datos locales cuando existan
               const apiSessions: Session[] = statsData.recent_sessions_stats.map((apiSession) => {
                 const existingSession = get().sessions.find(s => s.id === apiSession.session_id)
-                
-                const text = (existingSession && existingSession.text && existingSession.text.length > (apiSession.text_snippet?.length || 0))
-                             ? existingSession.text
-                             : (apiSession.text_snippet || "");
+
+                const text = existingSession?.text && existingSession.text.length > (apiSession.text_snippet?.length || 0)
+                  ? existingSession.text
+                  : (apiSession.text_snippet || "")
+
+                const words = existingSession?.words
+
+                const topic = existingSession?.topic || apiSession.topic || "Lectura general"
 
                 return {
                   id: apiSession.session_id,
-                  title: apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
-                  topic: apiSession.topic || "Lectura general",
-                  text: text, // Use preserved or snippet text
-                  folderId: null,
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
+                  topic,
+                  text,
+                  words,
+                  folderId: existingSession?.folderId || null,
                   type: "generate" as const,
                   createdAt: apiSession.created_at,
                   userId: userId,
@@ -577,16 +630,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
               statsData.recent_sessions_stats.forEach(apiSession => {
                 const existingSession = sessionsMap.get(apiSession.session_id);
-                
-                const text = (existingSession && existingSession.text && existingSession.text.length > (apiSession.text_snippet?.length || 0))
-                             ? existingSession.text
-                             : (apiSession.text_snippet || "");
+
+                const text = existingSession?.text && existingSession.text.length > (apiSession.text_snippet?.length || 0)
+                  ? existingSession.text
+                  : (apiSession.text_snippet || "");
+
+                const words = existingSession?.words;
+
+                const topic = existingSession?.topic || apiSession.topic || "Lectura general";
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
-                  title: apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
-                  topic: apiSession.topic || "Lectura general",
-                  text: text, // Use preserved or snippet text
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
+                  topic,
+                  text,
+                  words,
                   folderId: existingSession?.folderId || null,
                   type: "generate" as const,
                   createdAt: apiSession.created_at,
