@@ -3,6 +3,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { rsvpApi } from "@/lib/rsvpApi"
+import { formatDateInLima } from "@/lib/utils"
 
 interface Window {
   id: string
@@ -470,20 +471,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           .slice(-20) // Last 20 sessions for better chart readability
 
         const wpmData = sortedSessionsForCharts.map((session, index) => ({
-          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
+          name: formatDateInLima(session.createdAt),
           value: session.stats?.wpm || 0,
           fullDate: session.createdAt,
           sessionId: session.id
         }))
 
         const scoreData = sortedSessionsForCharts.map((session, index) => ({
-          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
+          name: formatDateInLima(session.createdAt),
           value: session.stats?.score || 0,
           fullDate: session.createdAt,
           sessionId: session.id
@@ -538,7 +533,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 return {
                   id: apiSession.session_id,
-                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
                   topic,
                   text,
                   words,
@@ -611,7 +606,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
-                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
                   topic,
                   text,
                   words,
