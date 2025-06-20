@@ -568,7 +568,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 return {
                   id: apiSession.session_id,
+
                   title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
+
                   topic,
                   text,
                   words,
@@ -641,6 +643,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
+
                   title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
                   topic,
                   text,

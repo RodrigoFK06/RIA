@@ -163,7 +163,9 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
               </CardHeader>
               <CardContent>
                 <div className={`prose dark:prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
+
                   <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback || sessionStats?.feedback || "Sin retroalimentación disponible"}</p>
+
                 </div>
 
                 <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
