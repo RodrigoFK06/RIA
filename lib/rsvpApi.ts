@@ -188,5 +188,7 @@ export const rsvpApi = {
     request<StatsResponse>('/api/stats', { method: 'GET' }, token),
   assistant: (data: AssistantRequest, token: string) =>
     request<AssistantResponse>('/api/assistant', { method: 'POST', body: data }, token),
+  deleteRsvp: (id: string, token: string) =>
+    request<{ message: string }>(`/api/rsvp/${id}`, { method: 'DELETE' }, token),
 }
 

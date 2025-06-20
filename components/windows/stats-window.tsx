@@ -51,14 +51,14 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
   return (
     <WindowFrame
       id={windowData.id}
-      title="Estadísticas y Feedback"
+      title="Estadísticas y Retroalimentación"
       initialWidth={windowData.position.width}
       initialHeight={windowData.position.height}
       initialX={windowData.position.x}
       initialY={windowData.position.y}    >
       <div className="space-y-6">
         <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'justify-between'}`}>
-          <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Estadísticas y Feedback</h2>
+          <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Estadísticas y Retroalimentación</h2>
           <Button 
             variant="outline" 
             size={isMobile ? "default" : "sm"}
@@ -72,10 +72,10 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
         <Tabs defaultValue="stats">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="stats" className={`flex items-center gap-1 ${isMobile ? 'text-sm' : ''}`}>
-              <BarChart className="h-4 w-4" /> {isMobile ? 'Stats' : 'Estadísticas'}
+              <BarChart className="h-4 w-4" /> {isMobile ? 'Estadísticas' : 'Estadísticas'}
             </TabsTrigger>
             <TabsTrigger value="feedback" className={`flex items-center gap-1 ${isMobile ? 'text-sm' : ''}`}>
-              <BookOpen className="h-4 w-4" /> Feedback
+              <BookOpen className="h-4 w-4" /> Retroalimentación
             </TabsTrigger>
           </TabsList>
 
@@ -151,12 +151,12 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
           <TabsContent value="feedback" className="mt-4">
             <Card>
               <CardHeader>
-                <CardTitle className={isMobile ? 'text-base' : ''}>Feedback Personalizado</CardTitle>
+                <CardTitle className={isMobile ? 'text-base' : ''}>Retroalimentación Personalizada</CardTitle>
                 <CardDescription className={isMobile ? 'text-sm' : ''}>Análisis de tu desempeño generado por IA</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className={`prose dark:prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
-                  <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback ?? "Sin feedback disponible"}</p>
+                  <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback ?? "Sin retroalimentación disponible"}</p>
                 </div>
 
                 <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
