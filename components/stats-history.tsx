@@ -24,6 +24,7 @@ import {
   Activity
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { formatDateInLima } from "@/lib/utils"
 
 export default function StatsHistory() {
   const [timeRange, setTimeRange] = useState("30")
@@ -357,13 +358,7 @@ export default function StatsHistory() {
                       Sesión #{index + 1}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {new Date(session.created_at).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {formatDateInLima(session.created_at, true)}
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-sm">

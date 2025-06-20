@@ -3,6 +3,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { rsvpApi } from "@/lib/rsvpApi"
+import { formatDateInLima } from "@/lib/utils"
 
 interface Window {
   id: string
@@ -71,7 +72,7 @@ interface WorkspaceState {
   deleteSession: (id: string) => void
   deleteSessionById: (id: string, token: string) => Promise<void>
   setActiveSession: (id: string | null) => void
-  loadSession: (id: string) => void
+  loadSession: (id: string, token?: string) => Promise<void>
 
   // Security: Filter sessions by user
   getUserSessions: (userId: string) => Session[]
@@ -306,8 +307,43 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ activeSession: id })
       },
 
-      loadSession: (id) => {
-        const session = get().sessions.find((s) => s.id === id)
+      loadSession: async (id, token) => {
+        let session = get().sessions.find((s) => s.id === id)
+
+        if (token) {
+          try {
+            const apiSession = await rsvpApi.getRsvp(id, token)
+            if (apiSession) {
+              const updated: Session = {
+                id: apiSession.id,
+                title: session?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at || new Date().toISOString())})`,
+                topic: apiSession.topic || session?.topic || 'Lectura',
+                text: apiSession.text,
+                words: apiSession.words,
+                folderId: session?.folderId || null,
+                type: 'generate',
+                createdAt: apiSession.created_at || session?.createdAt || new Date().toISOString(),
+                userId: session?.userId,
+                stats: {
+                  wpm: apiSession.wpm || session?.stats?.wpm || 0,
+                  totalTime: (apiSession.reading_time_seconds || 0) * 1000,
+                  idealTime: (apiSession.ai_estimated_ideal_reading_time_seconds || 0) * 1000,
+                  score: apiSession.quiz_score || session?.stats?.score || 0,
+                  feedback: `Dificultad: ${apiSession.ai_text_difficulty || ''}`,
+                },
+              }
+
+              set((state) => ({
+                sessions: state.sessions.map((s) => (s.id === id ? updated : s)),
+              }))
+
+              session = updated
+            }
+          } catch (err) {
+            console.error('Error fetching session details:', err)
+          }
+        }
+
         if (!session) return
 
         // Clear existing windows
@@ -470,20 +506,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           .slice(-20) // Last 20 sessions for better chart readability
 
         const wpmData = sortedSessionsForCharts.map((session, index) => ({
-          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
+          name: formatDateInLima(session.createdAt),
           value: session.stats?.wpm || 0,
           fullDate: session.createdAt,
           sessionId: session.id
         }))
 
         const scoreData = sortedSessionsForCharts.map((session, index) => ({
-          name: new Date(session.createdAt).toLocaleDateString('es-ES', { 
-            month: 'short', 
-            day: 'numeric' 
-          }),
+          name: formatDateInLima(session.createdAt),
           value: session.stats?.score || 0,
           fullDate: session.createdAt,
           sessionId: session.id
@@ -538,7 +568,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 return {
                   id: apiSession.session_id,
-                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
+
                   topic,
                   text,
                   words,
@@ -611,7 +643,8 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
-                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${new Date(apiSession.created_at).toLocaleDateString()})`,
+
+                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
                   topic,
                   text,
                   words,

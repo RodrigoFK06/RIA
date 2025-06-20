@@ -23,6 +23,7 @@ interface QuizWindowProps {
       sessionId: string
       questions: QuizQuestion[]
       text: string
+      readingTimeSeconds?: number
     }
   }
 }
@@ -40,6 +41,7 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
   const questions = windowData.data?.questions || []
   const sessionId = windowData.data?.sessionId || ""
   const text = windowData.data?.text || ""
+  const readingTimeSeconds = windowData.data?.readingTimeSeconds
 
   // Inicializar respuestas vacías para todas las preguntas
   useEffect(() => {
@@ -77,30 +79,44 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
       return
     }
 
-    try {      const payload = {
+    try {
+      const payload = {
         rsvp_session_id: sessionId,
         answers: questions.map((q, i) => ({
           question_id: q.id,
           user_answer: answers[i],
         })),
+        reading_time_seconds: readingTimeSeconds,
       }
-      
+
       const res = await rsvpApi.validateQuiz(payload, token)
       setValidation(res)
       setScore(res.overall_score)
-      setIsSubmitted(true)// Update session stats in local store for real-time metrics updates
-      // Note: The quiz validation doesn't provide WPM/time data directly,
-      // so we'll update with quiz score and get full stats from API later
-      const sessionStats = {
-        wpm: 0, // Will be updated from API stats refresh
-        totalTime: 0, // Will be updated from API stats refresh
-        idealTime: 0, // Will be updated from API stats refresh
+      setIsSubmitted(true)
+
+      let sessionStats = {
+        wpm: res.wpm || 0,
+        totalTime: (res.reading_time_seconds || 0) * 1000,
+        idealTime: (res.ai_estimated_ideal_reading_time_seconds || 0) * 1000,
         score: res.overall_score,
-        feedback: `Comprensión: ${res.overall_score}% - Evaluación completada`
+        feedback: `Comprensión: ${res.overall_score}% - Evaluación completada`,
       }
-      
+
+      try {
+        const sessionData = await rsvpApi.getRsvp(sessionId, token)
+        sessionStats = {
+          wpm: sessionData.wpm || sessionStats.wpm,
+          totalTime: (sessionData.reading_time_seconds || sessionStats.totalTime / 1000) * 1000,
+          idealTime: (sessionData.ai_estimated_ideal_reading_time_seconds || sessionStats.idealTime / 1000) * 1000,
+          score: sessionData.quiz_score || sessionStats.score,
+          feedback: `Dificultad: ${sessionData.ai_text_difficulty || ''}`,
+        }
+      } catch (fetchErr) {
+        console.error('Error fetching session after quiz:', fetchErr)
+      }
+
       updateSessionStats(sessionId, sessionStats)
-      
+
       toast({
         title: "Quiz completado",
         description: `Puntuación: ${res.overall_score}% - ¡Estadísticas actualizadas!`,

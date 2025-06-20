@@ -32,6 +32,13 @@ export interface RsvpSession {
   id: string
   text: string
   words: string[]
+  reading_time_seconds?: number
+  wpm?: number
+  quiz_score?: number
+  ai_estimated_ideal_reading_time_seconds?: number
+  ai_text_difficulty?: string
+  topic?: string
+  created_at?: string
   // additional fields may exist
   [key: string]: any
 }
@@ -56,11 +63,15 @@ export interface QuizValidateRequest {
     question_id: string
     user_answer: string
   }[]
+  reading_time_seconds?: number
 }
 
 export interface QuizValidateResponse {
   rsvp_session_id: string
   overall_score: number
+  reading_time_seconds?: number
+  wpm?: number
+  ai_estimated_ideal_reading_time_seconds?: number
   results: {
     question_id: string
     is_correct: boolean

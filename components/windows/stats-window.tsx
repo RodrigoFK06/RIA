@@ -16,7 +16,13 @@ interface StatsWindowProps {
     position: { x: number; y: number; width: number; height: number }
     data?: {
       sessionId: string
-      stats: StatsResponse
+      stats: StatsResponse | {
+        wpm: number
+        totalTime: number
+        idealTime: number
+        score: number
+        feedback: string
+      }
       score: number
       text: string
       validation: QuizValidateResponse | null
@@ -30,9 +36,10 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
   const { isMobile, isTablet } = useBreakpoint()
 
   const stats = windowData.data?.stats
-  const overall = stats?.overall_stats
-  const last = stats?.recent_sessions_stats?.[0]
-  const score = windowData.data?.score || 0
+  const overall = (stats as StatsResponse)?.overall_stats
+  const last = (stats as StatsResponse)?.recent_sessions_stats?.[0]
+  const sessionStats = (stats as any)?.wpm !== undefined ? (stats as { wpm: number; totalTime: number; idealTime: number; score: number; feedback: string }) : null
+  const score = sessionStats?.score ?? windowData.data?.score ?? 0
   const sessionId = windowData.data?.sessionId || ""
   const validation = windowData.data?.validation
   const questions = windowData.data?.questions || []
@@ -86,7 +93,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Velocidad de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.average_wpm ?? 0} WPM</div>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.average_wpm ?? sessionStats?.wpm ?? 0} WPM</div>
                   <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Palabras por minuto</p>
                 </CardContent>
               </Card>
@@ -106,7 +113,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Tiempo de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall ? Math.round(overall.total_reading_time_seconds) : 0}s</div>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall ? Math.round(overall.total_reading_time_seconds) : sessionStats ? Math.round(sessionStats.totalTime / 1000) : 0}s</div>
                   <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Tiempo total empleado</p>
                 </CardContent>
               </Card>
@@ -116,7 +123,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Sesiones</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.total_sessions_read ?? 0}</div>
+                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.total_sessions_read ?? 1}</div>
                   <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Sesiones completadas</p>
                 </CardContent>
               </Card>
@@ -132,14 +139,14 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                     <div className="flex flex-col items-center">
                       <div
                         className={`bg-slate-200 dark:bg-slate-700 rounded-t-md ${isMobile ? 'w-12' : 'w-16'}`}
-                        style={{ height: `${Math.min(isMobile ? 120 : 180, (last?.reading_time_seconds ?? 0) * (isMobile ? 2 : 3))}px` }}
+                        style={{ height: `${Math.min(isMobile ? 120 : 180, ((last?.reading_time_seconds ?? (sessionStats ? sessionStats.totalTime / 1000 : 0)) ) * (isMobile ? 2 : 3))}px` }}
                       ></div>
                       <span className={`mt-2 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>Tu tiempo</span>
                     </div>
                     <div className="flex flex-col items-center">
                       <div
                         className={`bg-green-200 dark:bg-green-700 rounded-t-md ${isMobile ? 'w-12' : 'w-16'}`}
-                        style={{ height: `${Math.min(isMobile ? 120 : 180, (last?.ai_estimated_ideal_reading_time_seconds ?? 0) * (isMobile ? 2 : 3))}px` }}
+                        style={{ height: `${Math.min(isMobile ? 120 : 180, ((last?.ai_estimated_ideal_reading_time_seconds ?? (sessionStats ? sessionStats.idealTime / 1000 : 0))) * (isMobile ? 2 : 3))}px` }}
                       ></div>
                       <span className={`mt-2 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>Tiempo ideal</span>
                     </div>
@@ -156,7 +163,9 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
               </CardHeader>
               <CardContent>
                 <div className={`prose dark:prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
-                  <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback ?? "Sin retroalimentación disponible"}</p>
+
+                  <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback || sessionStats?.feedback || "Sin retroalimentación disponible"}</p>
+
                 </div>
 
                 <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>

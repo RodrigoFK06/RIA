@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { useWorkspaceStore } from "@/lib/store"
+import { useAuthStore } from "@/lib/auth-store"
 import TopicWindow from "@/components/windows/topic-window"
 import ReaderWindow from "@/components/windows/reader-window"
 import QuizWindow from "@/components/windows/quiz-window"
@@ -18,13 +19,14 @@ interface WorkspaceProps {
 
 export default function Workspace({ sidebarOpen }: WorkspaceProps) {
   const { windows, activeWindow, activeSession, setActiveWindow, addWindow, loadSession } = useWorkspaceStore()
+  const { token } = useAuthStore()
   const { toast } = useToast()
 
   useEffect(() => {
     if (activeSession) {
-      loadSession(activeSession)
+      loadSession(activeSession, token)
     }
-  }, [activeSession, loadSession])
+  }, [activeSession, loadSession, token])
 
   const handleAddWindow = (type: string) => {
     addWindow(type)

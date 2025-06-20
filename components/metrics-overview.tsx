@@ -11,6 +11,7 @@ import { BarChart, LineChart, PieChart } from "@/components/charts"
 import { BarChart3, LineChartIcon, PieChartIcon, Calendar, TrendingUp, Brain, Clock, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { formatDateInLima } from "@/lib/utils"
 
 export default function MetricsOverview() {
   const [timeRange, setTimeRange] = useState("30")
@@ -79,7 +80,7 @@ export default function MetricsOverview() {
 
     // WPM evolution with dates
     const wpmData = sessions.map((session, index) => ({
-      name: new Date(session.createdAt).toLocaleDateString(),
+      name: formatDateInLima(session.createdAt),
       value: session.stats?.wpm || 0,
       sessionId: session.id,
       title: session.title
@@ -87,7 +88,7 @@ export default function MetricsOverview() {
 
     // Comprehension scores with dates  
     const scoreData = sessions.map((session, index) => ({
-      name: new Date(session.createdAt).toLocaleDateString(),
+      name: formatDateInLima(session.createdAt),
       value: session.stats?.score || 0,
       sessionId: session.id,
       title: session.title

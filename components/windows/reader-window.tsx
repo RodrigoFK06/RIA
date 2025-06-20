@@ -186,6 +186,7 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
         sessionId,
         questions: data.questions,
         text,
+        readingTimeSeconds: readingStats ? Math.round(readingStats.totalTime / 1000) : undefined,
       })
 
       toast({
