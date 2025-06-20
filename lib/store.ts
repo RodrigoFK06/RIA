@@ -69,6 +69,7 @@ interface WorkspaceState {
   updateSession: (id: string, data: Partial<Session>) => void
   updateSessionStats: (id: string, stats: Session['stats']) => void
   deleteSession: (id: string) => void
+  deleteSessionById: (id: string, token: string) => Promise<void>
   setActiveSession: (id: string | null) => void
   loadSession: (id: string) => void
 
@@ -285,6 +286,20 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           sessions: state.sessions.filter((session) => session.id !== id),
           activeSession: state.activeSession === id ? null : state.activeSession,
         }))
+      },
+
+      deleteSessionById: async (id, token) => {
+        try {
+          await rsvpApi.deleteRsvp(id, token)
+          set((state) => ({
+            sessions: state.sessions.filter((session) => session.id !== id),
+            activeSession: state.activeSession === id ? null : state.activeSession,
+          }))
+          console.log('✅ Sesión eliminada del servidor y estado:', id)
+        } catch (error) {
+          console.error('Error deleting session:', error)
+          throw error
+        }
       },
 
       setActiveSession: (id) => {
