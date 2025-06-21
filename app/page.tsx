@@ -10,15 +10,25 @@ import { Toaster } from "@/components/toaster"
 export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "workspace">("dashboard")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [dashboardTab, setDashboardTab] = useState("new")
   const { activeProject } = useWorkspaceStore()
 
   return (
     <main className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
-      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} setActiveView={setActiveView} />
+      <Sidebar
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+        setActiveView={setActiveView}
+        setDashboardTab={setDashboardTab}
+      />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {activeView === "dashboard" ? (
-          <Dashboard setActiveView={setActiveView} />
+          <Dashboard
+            setActiveView={setActiveView}
+            activeTab={dashboardTab}
+            setActiveTab={setDashboardTab}
+          />
         ) : (
           <Workspace sidebarOpen={sidebarOpen} />
         )}
