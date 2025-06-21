@@ -564,12 +564,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 const words = existingSession?.words
 
-                const topic = existingSession?.topic || apiSession.topic || "Lectura general"
+                const topic = apiSession.topic || existingSession?.topic || "Lectura general"
+
+                const title =
+                  apiSession.topic?.trim()
+                    ? apiSession.topic
+                    : existingSession?.title || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`
 
                 return {
                   id: apiSession.session_id,
 
-                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
+                  title,
 
                   topic,
                   text,
@@ -639,12 +644,17 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 const words = existingSession?.words;
 
-                const topic = existingSession?.topic || apiSession.topic || "Lectura general";
+                const topic = apiSession.topic || existingSession?.topic || "Lectura general";
+
+                const title =
+                  apiSession.topic?.trim()
+                    ? apiSession.topic
+                    : existingSession?.title || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`;
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
 
-                  title: existingSession?.title || apiSession.topic || `Sesión de lectura (${formatDateInLima(apiSession.created_at)})`,
+                  title,
                   topic,
                   text,
                   words,
