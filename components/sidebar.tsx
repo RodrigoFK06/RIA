@@ -20,6 +20,7 @@ import {
   BookOpen,
   BarChart3,
   History,
+  Activity,
   Settings,
   MessageSquare,
   Clock,
@@ -46,9 +47,10 @@ interface SidebarProps {
   open: boolean
   setOpen: (open: boolean) => void
   setActiveView: (view: "dashboard" | "workspace") => void
+  setDashboardTab: (tab: string) => void
 }
 
-export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) {
+export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab }: SidebarProps) {
   const {
     projects,
     sessions,
@@ -296,7 +298,10 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
               <div className={cn("py-2", !open && "px-2")}>
                 <Button
                   variant="outline"
-                  className={cn("gap-2", open ? "w-full justify-start px-4" : "w-full h-10 p-0 justify-center")}
+                  className={cn(
+                    "gap-2",
+                    open ? "w-full justify-start px-4" : "mx-auto h-10 w-10 p-0 justify-center"
+                  )}
                   onClick={() => setActiveView("dashboard")}
                 >
                   <Plus className="h-4 w-4" />
@@ -432,7 +437,11 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
                           variant="ghost"
                           size="icon"
                           className="w-full h-10"
-                          onClick={() => setActiveView("dashboard")}
+                          onClick={() => {
+                            setDashboardTab("history")
+                            setActiveView("dashboard")
+                          }}
+                          aria-label="Historial"
                         >
                           <History className="h-5 w-5" />
                         </Button>
@@ -448,7 +457,11 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
                           variant="ghost"
                           size="icon"
                           className="w-full h-10"
-                          onClick={() => setActiveView("dashboard")}
+                          onClick={() => {
+                            setDashboardTab("metrics")
+                            setActiveView("dashboard")
+                          }}
+                          aria-label="Métricas"
                         >
                           <BarChart3 className="h-5 w-5" />
                         </Button>
@@ -460,11 +473,20 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="w-full h-10" onClick={handleSettingsClick}>
-                          <Settings className="h-5 w-5" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-full h-10"
+                          onClick={() => {
+                            setDashboardTab("stats")
+                            setActiveView("dashboard")
+                          }}
+                          aria-label="Estadísticas"
+                        >
+                          <Activity className="h-5 w-5" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="right">Configuración</TooltipContent>
+                      <TooltipContent side="right">Estadísticas</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </div>
@@ -603,16 +625,48 @@ export default function Sidebar({ open, setOpen, setActiveView }: SidebarProps) 
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center w-full gap-2">
-                <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                  <User className="h-4 w-4" />
-                </div>
-                <div className="flex gap-1">
-                  <ThemeToggle />
-                  <Button variant="ghost" size="icon" onClick={handleLogout}>
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
+              <div className="flex flex-col items-center w-full gap-3">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={handleSettingsClick}
+                        aria-label="Perfil"
+                      >
+                        <User className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Perfil</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <ThemeToggle />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Modo oscuro</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleLogout}
+                        aria-label="Cerrar sesión"
+                      >
+                        <LogOut className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Cerrar sesión</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
           </div>
