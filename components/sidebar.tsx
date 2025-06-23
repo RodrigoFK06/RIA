@@ -302,10 +302,12 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
                     "gap-2",
                     open ? "w-full justify-start px-4" : "mx-auto h-10 w-10 p-0 justify-center"
                   )}
+
                   onClick={() => {
                     setDashboardTab("new")
                     setActiveView("dashboard")
                   }}
+
                 >
                   <Plus className="h-4 w-4" />
                   {open && <span>Nueva sesión</span>}
