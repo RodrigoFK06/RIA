@@ -295,14 +295,19 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
 
           {!searchQuery && (
             <>
-              <div className={cn("py-2", !open && "px-2")}>
+              <div className={cn("py-2", open ? "px-4" : "px-2")}> 
                 <Button
                   variant="outline"
                   className={cn(
                     "gap-2",
                     open ? "w-full justify-start px-4" : "mx-auto h-10 w-10 p-0 justify-center"
                   )}
-                  onClick={() => setActiveView("dashboard")}
+
+                  onClick={() => {
+                    setDashboardTab("new")
+                    setActiveView("dashboard")
+                  }}
+
                 >
                   <Plus className="h-4 w-4" />
                   {open && <span>Nueva sesión</span>}
@@ -310,9 +315,9 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
               </div>
 
               {open && (
-                <div className="px-4 py-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium">Proyectos</h3>
+                <div className="px-4 pt-4 pb-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold">Proyectos</h3>
                     <Dialog open={isNewFolderDialogOpen} onOpenChange={setIsNewFolderDialogOpen}>
                       <DialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-5 w-5">
@@ -601,7 +606,7 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
           )}
         </ScrollArea>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             {open ? (
               <>
