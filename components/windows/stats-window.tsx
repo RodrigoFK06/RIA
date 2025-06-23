@@ -164,7 +164,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
               <CardContent>
                 <div className={`prose dark:prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
 
-                  <p className={isMobile ? 'text-sm' : ''}>{stats?.personalized_feedback || sessionStats?.feedback || "Sin retroalimentación disponible"}</p>
+                  <p className={isMobile ? 'text-sm' : ''}>{(stats as StatsResponse)?.personalized_feedback || sessionStats?.feedback || "Sin retroalimentación disponible"}</p>
 
                 </div>
 

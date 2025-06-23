@@ -315,13 +315,12 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
               </div>
 
               {open && (
-                <div className="px-4 pt-4 pb-2">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="px-4 pt-4 pb-2">                  <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold">Proyectos</h3>
                     <Dialog open={isNewFolderDialogOpen} onOpenChange={setIsNewFolderDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-5 w-5">
-                          <PlusCircle className="h-3 w-3" />
+                        <Button variant="ghost" size="icon" className="h-6 w-6 p-5 flex items-center justify-center">
+                          <PlusCircle className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -604,22 +603,19 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
               )}
             </>
           )}
-        </ScrollArea>
-
-        <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800">
+        </ScrollArea>        <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between">
             {open ? (
               <>
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
                     <User className="h-4 w-4" />
                   </div>
-                  <div className="text-sm">
-                    <p className="font-medium">{user?.full_name || "Usuario"}</p>
-                    <p className="text-xs text-slate-500">{user?.email}</p>
+                  <div className="text-sm min-w-0 flex-1">
+                    <p className="font-medium truncate">{user?.full_name || "Usuario"}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                   <ThemeToggle />
                   <Button variant="ghost" size="icon" onClick={handleSettingsClick}>
                     <Settings className="h-4 w-4" />
