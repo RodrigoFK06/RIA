@@ -28,9 +28,11 @@ import {
 
 interface DashboardProps {
   setActiveView: (view: "dashboard" | "workspace") => void
+  activeTab: string
+  setActiveTab: (tab: string) => void
 }
 
-export default function Dashboard({ setActiveView }: DashboardProps) {
+export default function Dashboard({ setActiveView, activeTab, setActiveTab }: DashboardProps) {
   const [topic, setTopic] = useState("")
   const [customText, setCustomText] = useState("")
   const [selectedFolder, setSelectedFolder] = useState("")
@@ -198,7 +200,7 @@ export default function Dashboard({ setActiveView }: DashboardProps) {
           </div>
         </div>
 
-        <Tabs defaultValue="new" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className={cn("grid w-full", isMobile ? "grid-cols-2" : "grid-cols-4")}>
             <TabsTrigger value="new" className={cn("flex items-center gap-1", isMobile && "text-sm px-2")}>
               <Sparkles className="h-4 w-4" /> {isMobile ? "Nueva" : "Nueva Sesión"}
