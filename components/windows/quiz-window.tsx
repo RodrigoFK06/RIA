@@ -250,7 +250,7 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
       initialX={windowData.position.x}
       initialY={windowData.position.y}
     >
-      <div className={`container-fluid space-y-4 ${isMobile ? 'space-y-3' : 'space-y-6'}`}>
+      <div className={`container-responsive space-y-4 ${isMobile ? 'space-y-3' : 'space-y-6'}`}>
         <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between items-center'}`}>
           <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>
             Evaluación de Comprensión
