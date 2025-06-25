@@ -15,7 +15,7 @@ export default function Home() {
 
   return (
     <main
-      className="grid h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 lg:grid-cols-[16rem_1fr]"
+      className="grid min-h-svh overflow-y-auto bg-slate-50 dark:bg-slate-950 lg:grid-cols-[16rem_1fr]"
     >
       <Sidebar
         open={sidebarOpen}

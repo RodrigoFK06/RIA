@@ -224,10 +224,14 @@ export default function WindowFrame({
           </button>
         </div>
       </div>
-      <div className={cn(
-        "overflow-auto",
-        isMobile ? "p-4 h-[calc(100vh-60px)]" : "p-4 h-[calc(100%-40px)]"
-      )}>
+        <div
+          className={cn(
+            "overflow-auto",
+            isMobile
+              ? "p-4 h-[calc(var(--viewport-height)-60px)]"
+              : "p-4 h-[calc(100%-40px)]"
+          )}
+        >
         {children}
       </div>
     </Rnd>
