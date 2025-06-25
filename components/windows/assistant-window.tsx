@@ -127,7 +127,7 @@ export default function AssistantWindow({ windowData }: AssistantWindowProps) {
       initialX={windowData.position.x}
       initialY={windowData.position.y}
     >
-      <div className="container-fluid flex flex-col h-full">
+      <div className="container-responsive flex flex-col h-full">
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-4">
             {messages.map((message, index) => (

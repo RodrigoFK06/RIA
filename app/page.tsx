@@ -15,7 +15,7 @@ export default function Home() {
 
   return (
     <main
-      className="grid h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 lg:grid-cols-[250px_1fr]"
+      className="grid h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 lg:grid-cols-[16rem_1fr]"
     >
       <Sidebar
         open={sidebarOpen}
@@ -24,7 +24,7 @@ export default function Home() {
         setDashboardTab={setDashboardTab}
       />
 
-      <div className="flex flex-col overflow-hidden">
+      <div className="flex flex-col min-h-0 overflow-hidden">
         {activeView === "dashboard" ? (
           <Dashboard
             setActiveView={setActiveView}

@@ -111,7 +111,7 @@ export default function ParagraphWindow({ windowData }: ParagraphWindowProps) {
       initialX={windowData.position.x}
       initialY={windowData.position.y}
     >
-      <div className="container-fluid flex flex-col h-full">
+      <div className="container-responsive flex flex-col h-full">
         <div className="flex-1 overflow-auto p-4 bg-slate-800 dark:bg-slate-900 rounded-md">
           {renderParagraphWithHighlight()}
         </div>

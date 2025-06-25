@@ -63,7 +63,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
       initialHeight={windowData.position.height}
       initialX={windowData.position.x}
       initialY={windowData.position.y}    >
-      <div className="container-fluid space-y-6">
+      <div className="container-responsive space-y-6">
         <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'justify-between'}`}>
           <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Estadísticas y Retroalimentación</h2>
           <Button 
