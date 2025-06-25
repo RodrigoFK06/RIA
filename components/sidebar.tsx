@@ -223,8 +223,8 @@ export default function Sidebar({ open, setOpen, setActiveView, setDashboardTab 
     <div
       className={cn(
         "h-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 transition-all duration-300",
-        isMobile ? "w-0 overflow-hidden" : open ? "w-72" : "w-16",
-        isMobile && open && "fixed inset-y-0 left-0 z-50 w-72 shadow-lg"
+        isMobile ? "w-0 overflow-hidden" : open ? "w-64 sm:w-72" : "w-14 sm:w-16",
+        isMobile && open && "fixed inset-y-0 left-0 z-50 w-64 sm:w-72 shadow-lg"
       )}
     >
       <div className="flex h-full flex-col">
