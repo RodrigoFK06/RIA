@@ -234,7 +234,7 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
       initialX={windowData.position.x}
       initialY={windowData.position.y}
     >
-      <div className="flex flex-col h-full">
+      <div className="container-fluid flex flex-col h-full">
         <div className="flex-1 flex flex-col items-center justify-center">
           {isComplete ? (
             <div className="text-center space-y-4">

@@ -130,7 +130,7 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
 
   return (
     <div className={cn("flex-1 overflow-auto", isMobile ? "p-4" : "p-6")}>
-      <div className={cn("mx-auto space-y-6", isMobile ? "max-w-full" : "max-w-6xl")}>
+      <div className={cn("container-fluid space-y-6")}>
         <div className={cn("flex items-center", isMobile ? "flex-col space-y-4" : "justify-between")}>
           <h1 className={cn("font-bold", isMobile ? "text-xl text-center" : "text-2xl")}>RIA - Lector Inteligente RSVP</h1>
           <div className="flex items-center gap-2">
