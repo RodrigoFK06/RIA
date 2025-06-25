@@ -72,5 +72,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: clamp(0.875rem, 1vw, 1rem);
+    line-height: 1.5;
   }
 }
+
+.container-fluid {
+  @apply w-full max-w-screen-lg mx-auto px-4;
+}
+

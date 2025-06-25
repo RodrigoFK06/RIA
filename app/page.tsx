@@ -14,7 +14,9 @@ export default function Home() {
   const { activeProject } = useWorkspaceStore()
 
   return (
-    <main className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+    <main
+      className="grid h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 lg:grid-cols-[250px_1fr]"
+    >
       <Sidebar
         open={sidebarOpen}
         setOpen={setSidebarOpen}
@@ -22,7 +24,7 @@ export default function Home() {
         setDashboardTab={setDashboardTab}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex flex-col overflow-hidden">
         {activeView === "dashboard" ? (
           <Dashboard
             setActiveView={setActiveView}
