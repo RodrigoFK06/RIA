@@ -176,6 +176,7 @@ export default function StatsHistory() {
 
       {/* Resumen de estadísticas del servidor */}
       {apiStats?.overall_stats && (
+        <>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -258,7 +259,12 @@ export default function StatsHistory() {
             </div>
             <div className="text-sm text-muted-foreground">Tendencia Comp.</div>
           </div>
+<<<<<<< ovx5us-codex/integrar-datos-reales-del-endpoint-/api/stats
+          </div>
+        </>
+=======
         </div>
+>>>>>>> main
       )}
 
       {/* Estadísticas locales */}
