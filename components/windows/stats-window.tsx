@@ -43,12 +43,12 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
   // ✅ Sesión individual detectada si tiene "wpm" directamente
   const sessionStats = stats && 'wpm' in stats
     ? {
-        wpm: stats.wpm,
-        readingTime: stats.reading_time_seconds,
-        idealTime: stats.idealTime,
-        score: stats.score,
-        feedback: stats.feedback,
-      }
+      wpm: stats.wpm,
+      readingTime: stats.reading_time_seconds,
+      idealTime: stats.idealTime,
+      score: stats.score,
+      feedback: stats.feedback,
+    }
     : null
 
   const score = sessionStats?.score ?? windowData.data?.score ?? 0
@@ -79,10 +79,10 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
       <div className="space-y-6">
         <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'justify-between'}`}>
           <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Estadísticas y Retroalimentación</h2>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size={isMobile ? "default" : "sm"}
-            className="flex items-center gap-1" 
+            className="flex items-center gap-1"
             onClick={handleOpenAssistant}
           >
             <MessageSquare className="h-4 w-4" /> Asistente IA
@@ -127,7 +127,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="font-bold text-2xl">
-                    {overall ? Math.round(overall.total_reading_time_seconds) : sessionStats?.readingTime ?? 0}s
+                    {sessionStats?.readingTime ?? Math.round(overall?.total_reading_time_seconds ?? 0)}s
                   </div>
                   <p className="text-slate-500 mt-1 text-xs">Tiempo total empleado</p>
                 </CardContent>
@@ -157,7 +157,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                       style={{
                         height: `${Math.min(
                           isMobile ? 120 : 180,
-                          (last?.reading_time_seconds ?? sessionStats?.readingTime ?? 0) * (isMobile ? 2 : 3)
+                          (sessionStats?.readingTime ?? last?.reading_time_seconds ?? 0) * (isMobile ? 2 : 3)
                         )}px`,
                       }}
                     ></div>
@@ -169,7 +169,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                       style={{
                         height: `${Math.min(
                           isMobile ? 120 : 180,
-                          (last?.ai_estimated_ideal_reading_time_seconds ?? sessionStats?.idealTime ?? 0) * (isMobile ? 2 : 3)
+                          (sessionStats?.idealTime ?? last?.ai_estimated_ideal_reading_time_seconds ?? 0) * (isMobile ? 2 : 3)
                         )}px`,
                       }}
                     ></div>
@@ -194,8 +194,8 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                 </div>
 
                 <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size={isMobile ? "default" : "sm"}
                     className="flex items-center gap-1"
                   >
