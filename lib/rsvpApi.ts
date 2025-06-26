@@ -84,11 +84,17 @@ export interface StatsResponse {
   user_id: string
   overall_stats: {
     total_sessions_read: number
-  total_reading_time_seconds: number
+    total_reading_time_seconds: number
     total_words_read: number
     average_wpm: number
     total_quizzes_taken: number
     average_quiz_score: number
+    delta_wpm_vs_previous: number
+    delta_comprehension_vs_previous: number
+    delta_reading_time_vs_previous: number
+    reading_progress_percent: number
+    wpm_trend: "up" | "down" | "stable"
+    comprehension_trend: "up" | "down" | "stable"
   }
   recent_sessions_stats: {
     session_id: string
@@ -101,6 +107,7 @@ export interface StatsResponse {
     ai_text_difficulty: string
     ai_estimated_ideal_reading_time_seconds: number
     created_at: string
+    created_at_local: string
     topic?: string // Topic real de la sesión (opcional por compatibilidad)
   }[]
   personalized_feedback: string | null
