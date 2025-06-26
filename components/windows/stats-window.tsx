@@ -18,7 +18,7 @@ interface StatsWindowProps {
       sessionId: string
       stats: StatsResponse | {
         wpm: number
-        totalTime: number
+        reading_time_seconds: number
         idealTime: number
         score: number
         feedback: string
@@ -36,9 +36,21 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
   const { isMobile, isTablet } = useBreakpoint()
 
   const stats = windowData.data?.stats
+
   const overall = (stats as StatsResponse)?.overall_stats
   const last = (stats as StatsResponse)?.recent_sessions_stats?.[0]
-  const sessionStats = (stats as any)?.wpm !== undefined ? (stats as { wpm: number; totalTime: number; idealTime: number; score: number; feedback: string }) : null
+
+  // ✅ Sesión individual detectada si tiene "wpm" directamente
+  const sessionStats = stats && 'wpm' in stats
+    ? {
+        wpm: stats.wpm,
+        readingTime: stats.reading_time_seconds,
+        idealTime: stats.idealTime,
+        score: stats.score,
+        feedback: stats.feedback,
+      }
+    : null
+
   const score = sessionStats?.score ?? windowData.data?.score ?? 0
   const sessionId = windowData.data?.sessionId || ""
   const validation = windowData.data?.validation
@@ -62,7 +74,8 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
       initialWidth={windowData.position.width}
       initialHeight={windowData.position.height}
       initialX={windowData.position.x}
-      initialY={windowData.position.y}    >
+      initialY={windowData.position.y}
+    >
       <div className="space-y-6">
         <div className={`flex items-center gap-2 ${isMobile ? 'flex-col' : 'justify-between'}`}>
           <h2 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl'}`}>Estadísticas y Retroalimentación</h2>
@@ -79,7 +92,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
         <Tabs defaultValue="stats">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="stats" className={`flex items-center gap-1 ${isMobile ? 'text-sm' : ''}`}>
-              <BarChart className="h-4 w-4" /> {isMobile ? 'Estadísticas' : 'Estadísticas'}
+              <BarChart className="h-4 w-4" /> Estadísticas
             </TabsTrigger>
             <TabsTrigger value="feedback" className={`flex items-center gap-1 ${isMobile ? 'text-sm' : ''}`}>
               <BookOpen className="h-4 w-4" /> Retroalimentación
@@ -87,44 +100,46 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
           </TabsList>
 
           <TabsContent value="stats" className="space-y-4 mt-4">
-            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : isTablet ? 'grid-cols-2' : 'grid-cols-2'}`}>
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Velocidad de Lectura</CardTitle>
+                  <CardTitle className="font-medium text-sm">Velocidad de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.average_wpm ?? sessionStats?.wpm ?? 0} WPM</div>
-                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Palabras por minuto</p>
+                  <div className="font-bold text-2xl">{overall?.average_wpm ?? sessionStats?.wpm ?? 0} WPM</div>
+                  <p className="text-slate-500 mt-1 text-xs">Palabras por minuto</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Puntuación</CardTitle>
+                  <CardTitle className="font-medium text-sm">Puntuación</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{score}%</div>
-                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Comprensión del texto</p>
+                  <div className="font-bold text-2xl">{score}%</div>
+                  <p className="text-slate-500 mt-1 text-xs">Comprensión del texto</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Tiempo de Lectura</CardTitle>
+                  <CardTitle className="font-medium text-sm">Tiempo de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall ? Math.round(overall.total_reading_time_seconds) : sessionStats ? Math.round(sessionStats.totalTime / 1000) : 0}s</div>
-                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Tiempo total empleado</p>
+                  <div className="font-bold text-2xl">
+                    {overall ? Math.round(overall.total_reading_time_seconds) : sessionStats?.readingTime ?? 0}s
+                  </div>
+                  <p className="text-slate-500 mt-1 text-xs">Tiempo total empleado</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className={`font-medium ${isMobile ? 'text-sm' : 'text-sm'}`}>Sesiones</CardTitle>
+                  <CardTitle className="font-medium text-sm">Sesiones</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className={`font-bold ${isMobile ? 'text-xl' : 'text-2xl'}`}>{overall?.total_sessions_read ?? 1}</div>
-                  <p className={`text-slate-500 mt-1 ${isMobile ? 'text-xs' : 'text-xs'}`}>Sesiones completadas</p>
+                  <div className="font-bold text-2xl">{overall?.total_sessions_read ?? 1}</div>
+                  <p className="text-slate-500 mt-1 text-xs">Sesiones completadas</p>
                 </CardContent>
               </Card>
             </div>
@@ -135,22 +150,32 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                 <CardDescription className={isMobile ? 'text-sm' : ''}>Tu rendimiento comparado con el ideal</CardDescription>
               </CardHeader>
               <CardContent>
-                  <div className={`flex items-end justify-center gap-8 ${isMobile ? 'h-[150px]' : 'h-[200px]'}`}>
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`bg-slate-200 dark:bg-slate-700 rounded-t-md ${isMobile ? 'w-12' : 'w-16'}`}
-                        style={{ height: `${Math.min(isMobile ? 120 : 180, ((last?.reading_time_seconds ?? (sessionStats ? sessionStats.totalTime / 1000 : 0)) ) * (isMobile ? 2 : 3))}px` }}
-                      ></div>
-                      <span className={`mt-2 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>Tu tiempo</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div
-                        className={`bg-green-200 dark:bg-green-700 rounded-t-md ${isMobile ? 'w-12' : 'w-16'}`}
-                        style={{ height: `${Math.min(isMobile ? 120 : 180, ((last?.ai_estimated_ideal_reading_time_seconds ?? (sessionStats ? sessionStats.idealTime / 1000 : 0))) * (isMobile ? 2 : 3))}px` }}
-                      ></div>
-                      <span className={`mt-2 text-center ${isMobile ? 'text-xs' : 'text-xs'}`}>Tiempo ideal</span>
-                    </div>
+                <div className={`flex items-end justify-center gap-8 ${isMobile ? 'h-[150px]' : 'h-[200px]'}`}>
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="bg-slate-200 dark:bg-slate-700 rounded-t-md w-16"
+                      style={{
+                        height: `${Math.min(
+                          isMobile ? 120 : 180,
+                          (last?.reading_time_seconds ?? sessionStats?.readingTime ?? 0) * (isMobile ? 2 : 3)
+                        )}px`,
+                      }}
+                    ></div>
+                    <span className="mt-2 text-center text-xs">Tu tiempo</span>
                   </div>
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="bg-green-200 dark:bg-green-700 rounded-t-md w-16"
+                      style={{
+                        height: `${Math.min(
+                          isMobile ? 120 : 180,
+                          (last?.ai_estimated_ideal_reading_time_seconds ?? sessionStats?.idealTime ?? 0) * (isMobile ? 2 : 3)
+                        )}px`,
+                      }}
+                    ></div>
+                    <span className="mt-2 text-center text-xs">Tiempo ideal</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -163,9 +188,9 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
               </CardHeader>
               <CardContent>
                 <div className={`prose dark:prose-invert max-w-none ${isMobile ? 'prose-sm' : ''}`}>
-
-                  <p className={isMobile ? 'text-sm' : ''}>{(stats as StatsResponse)?.personalized_feedback || sessionStats?.feedback || "Sin retroalimentación disponible"}</p>
-
+                  <p className={isMobile ? 'text-sm' : ''}>
+                    {(stats as StatsResponse)?.personalized_feedback || sessionStats?.feedback || "Sin retroalimentación disponible"}
+                  </p>
                 </div>
 
                 <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
