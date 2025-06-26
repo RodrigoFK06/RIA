@@ -22,7 +22,10 @@ import {
   RefreshCw,
   Download,
   Share2,
-  Activity
+  Activity,
+  ChevronUp,
+  ChevronDown,
+  Circle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDateInLima } from "@/lib/utils"
@@ -226,14 +229,32 @@ export default function StatsHistory() {
             <div className="text-sm text-muted-foreground">Cambio Comprensión</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold capitalize">
-              {overall ? overall.wpm_trend : <Skeleton className="h-6 w-16 mx-auto" />}
+            <div className="text-2xl font-bold flex items-center justify-center gap-1">
+              {overall ? (
+                <>
+                  {overall.wpm_trend === 'up' && <ChevronUp className="h-4 w-4 text-green-600" />}
+                  {overall.wpm_trend === 'down' && <ChevronDown className="h-4 w-4 text-red-600" />}
+                  {overall.wpm_trend === 'stable' && <Circle className="h-3 w-3 text-muted-foreground" />}
+                  <span className="capitalize">{overall.wpm_trend}</span>
+                </>
+              ) : (
+                <Skeleton className="h-6 w-16 mx-auto" />
+              )}
             </div>
             <div className="text-sm text-muted-foreground">Tendencia WPM</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold capitalize">
-              {overall ? overall.comprehension_trend : <Skeleton className="h-6 w-16 mx-auto" />}
+            <div className="text-2xl font-bold flex items-center justify-center gap-1">
+              {overall ? (
+                <>
+                  {overall.comprehension_trend === 'up' && <ChevronUp className="h-4 w-4 text-green-600" />}
+                  {overall.comprehension_trend === 'down' && <ChevronDown className="h-4 w-4 text-red-600" />}
+                  {overall.comprehension_trend === 'stable' && <Circle className="h-3 w-3 text-muted-foreground" />}
+                  <span className="capitalize">{overall.comprehension_trend}</span>
+                </>
+              ) : (
+                <Skeleton className="h-6 w-16 mx-auto" />
+              )}
             </div>
             <div className="text-sm text-muted-foreground">Tendencia Comp.</div>
           </div>
@@ -250,10 +271,20 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgWpm} WPM</div>
+            <div className="text-2xl font-bold">
+              {overall ? (
+                `${overall.average_wpm} WPM`
+              ) : (
+                <Skeleton className="h-6 w-16 mx-auto" />
+              )}
+            </div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +{stats.wpmImprovement}% vs anterior
+              {overall ? (
+                `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}% vs anterior`
+              ) : (
+                <Skeleton className="h-4 w-16" />
+              )}
             </div>
           </CardContent>
         </Card>
@@ -266,10 +297,20 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgScore}%</div>
+            <div className="text-2xl font-bold">
+              {overall ? (
+                `${Math.round(overall.average_quiz_score)}%`
+              ) : (
+                <Skeleton className="h-6 w-12 mx-auto" />
+              )}
+            </div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +{stats.scoreImprovement}% vs anterior
+              {overall ? (
+                `${overall.delta_comprehension_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_comprehension_vs_previous)}% vs anterior`
+              ) : (
+                <Skeleton className="h-4 w-16" />
+              )}
             </div>
           </CardContent>
         </Card>
@@ -282,10 +323,14 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSessions}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              En {timeRange} días
+            <div className="text-2xl font-bold">
+              {overall ? (
+                overall.total_sessions_read
+              ) : (
+                <Skeleton className="h-6 w-10 mx-auto" />
+              )}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">En {timeRange} días</div>
           </CardContent>
         </Card>
 
@@ -297,10 +342,14 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(stats.totalTime / 60)} min</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Tiempo acumulado
+            <div className="text-2xl font-bold">
+              {overall ? (
+                `${Math.round(overall.total_reading_time_seconds / 60)} min`
+              ) : (
+                <Skeleton className="h-6 w-12 mx-auto" />
+              )}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">Tiempo acumulado</div>
           </CardContent>
         </Card>
       </div>
