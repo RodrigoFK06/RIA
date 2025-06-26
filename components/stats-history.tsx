@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { BarChart, LineChart, PieChart } from "@/components/charts"
 import { 
   BarChart3, 
@@ -45,6 +46,22 @@ export default function StatsHistory() {
   // Estadísticas calculadas CON DATOS REALES DEL USUARIO
   const stats = getSessionStats(Number.parseInt(timeRange), user?.id)
   const apiStats = getStatsHistory()
+
+  const overall = apiStats?.overall_stats
+
+  const wpmEvolution = apiStats?.recent_sessions_stats
+    ? apiStats.recent_sessions_stats
+        .slice(0, 10)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map(s => ({ name: formatDateInLima(s.created_at), value: s.wpm }))
+    : []
+
+  const scoreEvolution = apiStats?.recent_sessions_stats
+    ? apiStats.recent_sessions_stats
+        .slice(0, 10)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map(s => ({ name: formatDateInLima(s.created_at), value: s.quiz_score }))
+    : []
   const handleRefreshStats = async () => {
     if (!token) {
       toast({
@@ -195,6 +212,32 @@ export default function StatsHistory() {
             </div>
           </CardContent>
         </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold">
+              {overall ? `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}%` : <Skeleton className="h-6 w-12 mx-auto" />}
+            </div>
+            <div className="text-sm text-muted-foreground">Cambio WPM</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">
+              {overall ? `${overall.delta_comprehension_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_comprehension_vs_previous)}%` : <Skeleton className="h-6 w-12 mx-auto" />}
+            </div>
+            <div className="text-sm text-muted-foreground">Cambio Comprensión</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold capitalize">
+              {overall ? overall.wpm_trend : <Skeleton className="h-6 w-16 mx-auto" />}
+            </div>
+            <div className="text-sm text-muted-foreground">Tendencia WPM</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold capitalize">
+              {overall ? overall.comprehension_trend : <Skeleton className="h-6 w-16 mx-auto" />}
+            </div>
+            <div className="text-sm text-muted-foreground">Tendencia Comp.</div>
+          </div>
+        </div>
       )}
 
       {/* Estadísticas locales */}
@@ -288,8 +331,8 @@ export default function StatsHistory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] sm:h-[400px]">
-              {stats.wpmData.length > 0 ? (
-                <LineChart data={stats.wpmData} />
+              {wpmEvolution.length > 0 ? (
+                <LineChart data={wpmEvolution} />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   No hay datos suficientes para mostrar el gráfico
@@ -308,8 +351,8 @@ export default function StatsHistory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] sm:h-[400px]">
-              {stats.scoreData.length > 0 ? (
-                <BarChart data={stats.scoreData} />
+              {scoreEvolution.length > 0 ? (
+                <BarChart data={scoreEvolution} />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   No hay datos suficientes para mostrar el gráfico
@@ -352,25 +395,22 @@ export default function StatsHistory() {
           <CardContent>
             <div className="space-y-3">
               {apiStats.recent_sessions_stats.slice(0, 5).map((session: any, index: number) => (
-                <div key={session.session_id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      Sesión #{index + 1}
-                    </div>
+                <div key={session.session_id} className="p-3 border rounded-lg space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">Sesión #{index + 1}</div>
                     <div className="text-sm text-muted-foreground">
                       {formatDateInLima(session.created_at, true)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <Badge variant="secondary">
-                      {session.wpm} WPM
-                    </Badge>
-                    <Badge variant={session.quiz_score >= 70 ? "default" : "destructive"}>
+                  <p className="text-sm text-slate-500 line-clamp-2">
+                    {session.text_snippet}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm mt-1">
+                    <Badge variant="secondary">{session.wpm} WPM</Badge>
+                    <Badge variant={session.quiz_score >= 70 ? 'default' : 'destructive'}>
                       {session.quiz_score}%
                     </Badge>
-                    <Badge variant="outline">
-                      {session.ai_text_difficulty}
-                    </Badge>
+                    <Badge variant="outline">{session.ai_text_difficulty}</Badge>
                   </div>
                 </div>
               ))}
