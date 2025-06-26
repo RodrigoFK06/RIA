@@ -29,6 +29,7 @@ import {
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDateInLima } from "@/lib/utils"
+import type { StatsResponse } from "@/lib/rsvpApi"
 
 export default function StatsHistory() {
   const [timeRange, setTimeRange] = useState("30")
@@ -52,18 +53,20 @@ export default function StatsHistory() {
 
   const overall = apiStats?.overall_stats
 
+  type SessionStat = StatsResponse['recent_sessions_stats'][0]
+
   const wpmEvolution = apiStats?.recent_sessions_stats
     ? apiStats.recent_sessions_stats
         .slice(0, 10)
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .map(s => ({ name: formatDateInLima(s.created_at), value: s.wpm }))
+        .sort((a: SessionStat, b: SessionStat) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map((s: SessionStat) => ({ name: formatDateInLima(s.created_at), value: s.wpm }))
     : []
 
   const scoreEvolution = apiStats?.recent_sessions_stats
     ? apiStats.recent_sessions_stats
         .slice(0, 10)
-        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-        .map(s => ({ name: formatDateInLima(s.created_at), value: s.quiz_score }))
+        .sort((a: SessionStat, b: SessionStat) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map((s: SessionStat) => ({ name: formatDateInLima(s.created_at), value: s.quiz_score }))
     : []
   const handleRefreshStats = async () => {
     if (!token) {
@@ -259,12 +262,8 @@ export default function StatsHistory() {
             </div>
             <div className="text-sm text-muted-foreground">Tendencia Comp.</div>
           </div>
-<<<<<<< ovx5us-codex/integrar-datos-reales-del-endpoint-/api/stats
           </div>
         </>
-=======
-        </div>
->>>>>>> main
       )}
 
       {/* Estadísticas locales */}
