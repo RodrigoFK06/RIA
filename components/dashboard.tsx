@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { BookOpen, BarChart3, History, Sparkles, Clock, TrendingUp, Brain, PlusCircle, Activity } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import MetricsOverview from "@/components/metrics-overview"
 import RecentSessions from "@/components/recent-sessions"
 import StatsHistory from "@/components/stats-history"
@@ -39,10 +40,12 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
   const [newProjectName, setNewProjectName] = useState("")
   const [newProjectFolder, setNewProjectFolder] = useState("")
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false)
-  const { addSession, folders, addProject } = useWorkspaceStore()
+  const { addSession, folders, addProject, userStats, isLoadingStats } = useWorkspaceStore()
   const { user, token } = useAuthStore()
   const { toast } = useToast()
   const { isMobile, isTablet } = useBreakpoint()
+
+  const overall = userStats?.overall_stats
 
   const handleCreateSession = async (type: "generate" | "custom") => {
     if (type === "generate" && !topic.trim()) {
@@ -323,7 +326,9 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">300-500 WPM</div>
+                  <div className="text-2xl font-bold">
+                    {overall ? `${overall.average_wpm} WPM` : <Skeleton className="h-6 w-24" />}
+                  </div>
                   <p className="text-xs text-slate-500 mt-1">Mejora tu velocidad con práctica regular</p>
                 </CardContent>
               </Card>
@@ -336,7 +341,9 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">+15% WPM</div>
+                  <div className="text-2xl font-bold">
+                    {overall ? `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}% WPM` : <Skeleton className="h-6 w-20" />}
+                  </div>
                   <p className="text-xs text-slate-500 mt-1">Incremento promedio después de 10 sesiones</p>
                 </CardContent>
               </Card>
@@ -349,7 +356,9 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">85%</div>
+                  <div className="text-2xl font-bold">
+                    {overall ? `${Math.round(overall.average_quiz_score)}%` : <Skeleton className="h-6 w-12" />}
+                  </div>
                   <p className="text-xs text-slate-500 mt-1">Retención promedio con técnica RSVP</p>
                 </CardContent>
               </Card>

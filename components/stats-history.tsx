@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { BarChart, LineChart, PieChart } from "@/components/charts"
 import { 
   BarChart3, 
@@ -21,7 +22,10 @@ import {
   RefreshCw,
   Download,
   Share2,
-  Activity
+  Activity,
+  ChevronUp,
+  ChevronDown,
+  Circle
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatDateInLima } from "@/lib/utils"
@@ -45,6 +49,22 @@ export default function StatsHistory() {
   // Estadísticas calculadas CON DATOS REALES DEL USUARIO
   const stats = getSessionStats(Number.parseInt(timeRange), user?.id)
   const apiStats = getStatsHistory()
+
+  const overall = apiStats?.overall_stats
+
+  const wpmEvolution = apiStats?.recent_sessions_stats
+    ? apiStats.recent_sessions_stats
+        .slice(0, 10)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map(s => ({ name: formatDateInLima(s.created_at), value: s.wpm }))
+    : []
+
+  const scoreEvolution = apiStats?.recent_sessions_stats
+    ? apiStats.recent_sessions_stats
+        .slice(0, 10)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        .map(s => ({ name: formatDateInLima(s.created_at), value: s.quiz_score }))
+    : []
   const handleRefreshStats = async () => {
     if (!token) {
       toast({
@@ -156,6 +176,7 @@ export default function StatsHistory() {
 
       {/* Resumen de estadísticas del servidor */}
       {apiStats?.overall_stats && (
+        <>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -195,6 +216,51 @@ export default function StatsHistory() {
             </div>
           </CardContent>
         </Card>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold">
+              {overall ? `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}%` : <Skeleton className="h-6 w-12 mx-auto" />}
+            </div>
+            <div className="text-sm text-muted-foreground">Cambio WPM</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold">
+              {overall ? `${overall.delta_comprehension_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_comprehension_vs_previous)}%` : <Skeleton className="h-6 w-12 mx-auto" />}
+            </div>
+            <div className="text-sm text-muted-foreground">Cambio Comprensión</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold flex items-center justify-center gap-1">
+              {overall ? (
+                <>
+                  {overall.wpm_trend === 'up' && <ChevronUp className="h-4 w-4 text-green-600" />}
+                  {overall.wpm_trend === 'down' && <ChevronDown className="h-4 w-4 text-red-600" />}
+                  {overall.wpm_trend === 'stable' && <Circle className="h-3 w-3 text-muted-foreground" />}
+                  <span className="capitalize">{overall.wpm_trend}</span>
+                </>
+              ) : (
+                <Skeleton className="h-6 w-16 mx-auto" />
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">Tendencia WPM</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold flex items-center justify-center gap-1">
+              {overall ? (
+                <>
+                  {overall.comprehension_trend === 'up' && <ChevronUp className="h-4 w-4 text-green-600" />}
+                  {overall.comprehension_trend === 'down' && <ChevronDown className="h-4 w-4 text-red-600" />}
+                  {overall.comprehension_trend === 'stable' && <Circle className="h-3 w-3 text-muted-foreground" />}
+                  <span className="capitalize">{overall.comprehension_trend}</span>
+                </>
+              ) : (
+                <Skeleton className="h-6 w-16 mx-auto" />
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground">Tendencia Comp.</div>
+          </div>
+          </div>
+        </>
       )}
 
       {/* Estadísticas locales */}
@@ -207,10 +273,20 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgWpm} WPM</div>
+            <div className="text-2xl font-bold">
+              {overall ? (
+                `${overall.average_wpm} WPM`
+              ) : (
+                <Skeleton className="h-6 w-16 mx-auto" />
+              )}
+            </div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +{stats.wpmImprovement}% vs anterior
+              {overall ? (
+                `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}% vs anterior`
+              ) : (
+                <Skeleton className="h-4 w-16" />
+              )}
             </div>
           </CardContent>
         </Card>
@@ -223,10 +299,20 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.avgScore}%</div>
+            <div className="text-2xl font-bold">
+              {overall ? (
+                `${Math.round(overall.average_quiz_score)}%`
+              ) : (
+                <Skeleton className="h-6 w-12 mx-auto" />
+              )}
+            </div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +{stats.scoreImprovement}% vs anterior
+              {overall ? (
+                `${overall.delta_comprehension_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_comprehension_vs_previous)}% vs anterior`
+              ) : (
+                <Skeleton className="h-4 w-16" />
+              )}
             </div>
           </CardContent>
         </Card>
@@ -239,10 +325,14 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSessions}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              En {timeRange} días
+            <div className="text-2xl font-bold">
+              {overall ? (
+                overall.total_sessions_read
+              ) : (
+                <Skeleton className="h-6 w-10 mx-auto" />
+              )}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">En {timeRange} días</div>
           </CardContent>
         </Card>
 
@@ -254,10 +344,14 @@ export default function StatsHistory() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.round(stats.totalTime / 60)} min</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              Tiempo acumulado
+            <div className="text-2xl font-bold">
+              {overall ? (
+                `${Math.round(overall.total_reading_time_seconds / 60)} min`
+              ) : (
+                <Skeleton className="h-6 w-12 mx-auto" />
+              )}
             </div>
+            <div className="text-xs text-muted-foreground mt-1">Tiempo acumulado</div>
           </CardContent>
         </Card>
       </div>
@@ -288,8 +382,8 @@ export default function StatsHistory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] sm:h-[400px]">
-              {stats.wpmData.length > 0 ? (
-                <LineChart data={stats.wpmData} />
+              {wpmEvolution.length > 0 ? (
+                <LineChart data={wpmEvolution} />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   No hay datos suficientes para mostrar el gráfico
@@ -308,8 +402,8 @@ export default function StatsHistory() {
               </CardDescription>
             </CardHeader>
             <CardContent className="h-[300px] sm:h-[400px]">
-              {stats.scoreData.length > 0 ? (
-                <BarChart data={stats.scoreData} />
+              {scoreEvolution.length > 0 ? (
+                <BarChart data={scoreEvolution} />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
                   No hay datos suficientes para mostrar el gráfico
@@ -352,25 +446,22 @@ export default function StatsHistory() {
           <CardContent>
             <div className="space-y-3">
               {apiStats.recent_sessions_stats.slice(0, 5).map((session: any, index: number) => (
-                <div key={session.session_id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="font-medium">
-                      Sesión #{index + 1}
-                    </div>
+                <div key={session.session_id} className="p-3 border rounded-lg space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium">Sesión #{index + 1}</div>
                     <div className="text-sm text-muted-foreground">
                       {formatDateInLima(session.created_at, true)}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <Badge variant="secondary">
-                      {session.wpm} WPM
-                    </Badge>
-                    <Badge variant={session.quiz_score >= 70 ? "default" : "destructive"}>
+                  <p className="text-sm text-slate-500 line-clamp-2">
+                    {session.text_snippet}
+                  </p>
+                  <div className="flex items-center gap-2 text-sm mt-1">
+                    <Badge variant="secondary">{session.wpm} WPM</Badge>
+                    <Badge variant={session.quiz_score >= 70 ? 'default' : 'destructive'}>
                       {session.quiz_score}%
                     </Badge>
-                    <Badge variant="outline">
-                      {session.ai_text_difficulty}
-                    </Badge>
+                    <Badge variant="outline">{session.ai_text_difficulty}</Badge>
                   </div>
                 </div>
               ))}
