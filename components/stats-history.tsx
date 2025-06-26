@@ -259,8 +259,12 @@ export default function StatsHistory() {
             </div>
             <div className="text-sm text-muted-foreground">Tendencia Comp.</div>
           </div>
+<<<<<<< ovx5us-codex/integrar-datos-reales-del-endpoint-/api/stats
           </div>
         </>
+=======
+        </div>
+>>>>>>> main
       )}
 
       {/* Estadísticas locales */}
