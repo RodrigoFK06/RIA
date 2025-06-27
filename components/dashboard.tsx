@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { useWorkspaceStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+
+// Reusable function to render performance deltas
+function renderDelta(delta: number | null, label: string) {
+  if (delta === null || delta === undefined) {
+    return (
+      <span className="text-sm text-muted-foreground">
+        Sin datos previos
+      </span>
+    )
+  }
+
+  const isPositive = delta >= 0
+  const sign = isPositive ? '+' : ''
+  const colorClass = isPositive ? 'text-green-500' : 'text-red-500'
+  const icon = isPositive ? TrendingUp : TrendingUp // Could use different icons
+
+  return (
+    <div className={`flex items-center text-xs ${colorClass} mt-1`}>
+      {React.createElement(icon, { className: "h-3 w-3 mr-1" })}
+      {sign}{Math.round(delta * 100) / 100}% vs anterior
+    </div>
+  )
+}
 
 interface DashboardProps {
   setActiveView: (view: "dashboard" | "workspace") => void
@@ -85,7 +108,7 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
       setActiveView("workspace")
     } catch (error: any) {
       console.error('Error creating session:', error)
-      
+
       // Manejar específicamente errores de token expirado
       if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized') || error?.message?.includes('Token expirado')) {
         toast({
@@ -139,8 +162,8 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
           <div className="flex items-center gap-2">
             <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
               <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className={cn("flex items-center gap-1", isMobile && "w-full")}
                   size={isMobile ? "default" : "default"}
                 >
@@ -184,14 +207,14 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                   </div>
                 </div>
                 <DialogFooter className={isMobile ? "flex-col space-y-2" : ""}>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setIsNewProjectDialogOpen(false)}
                     className={isMobile ? "w-full" : ""}
                   >
                     Cancelar
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleCreateProject}
                     className={isMobile ? "w-full" : ""}
                   >
@@ -272,9 +295,9 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button 
-                    onClick={() => handleCreateSession("generate")} 
-                    disabled={!topic.trim()} 
+                  <Button
+                    onClick={() => handleCreateSession("generate")}
+                    disabled={!topic.trim()}
                     className="w-full"
                     size={isMobile ? "default" : "default"}
                   >
@@ -327,7 +350,7 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {overall ? `${overall.average_wpm} WPM` : <Skeleton className="h-6 w-24" />}
+                    {overall ? `${overall.average_wpm.toFixed(2)} WPM` : <Skeleton className="h-6 w-24" />}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">Mejora tu velocidad con práctica regular</p>
                 </CardContent>
@@ -342,7 +365,7 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {overall ? `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}% WPM` : <Skeleton className="h-6 w-20" />}
+                    {overall ? renderDelta(overall.delta_wpm_vs_previous, "WPM") : <Skeleton className="h-6 w-20" />}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">Incremento promedio después de 10 sesiones</p>
                 </CardContent>
@@ -357,7 +380,9 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {overall ? `${Math.round(overall.average_quiz_score)}%` : <Skeleton className="h-6 w-12" />}
+                    {overall && overall.average_quiz_score !== null
+                      ? `${Math.round(overall.average_quiz_score)}%`
+                      : <Skeleton className="h-6 w-12" />}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">Retención promedio con técnica RSVP</p>
                 </CardContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useWorkspaceStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,6 +30,29 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { formatDateInLima } from "@/lib/utils"
 import type { StatsResponse } from "@/lib/rsvpApi"
+
+// Función reutilizable para renderizar deltas con manejo de valores null
+function renderDelta(delta: number | null, label: string) {
+  if (delta === null || delta === undefined) {
+    return (
+      <div className="text-xs text-muted-foreground mt-1">
+        Sin datos previos
+      </div>
+    )
+  }
+
+  const isPositive = delta >= 0
+  const sign = isPositive ? '+' : ''
+  const colorClass = isPositive ? 'text-green-500' : 'text-red-500'
+  const icon = isPositive ? TrendingUp : ChevronDown
+
+  return (
+    <div className={`flex items-center text-xs ${colorClass} mt-1`}>
+      {React.createElement(icon, { className: "h-3 w-3 mr-1" })}
+      {sign}{Math.round(delta * 100) / 100}% vs anterior
+    </div>
+  )
+}
 
 export default function StatsHistory() {
   const [timeRange, setTimeRange] = useState("30")
@@ -222,13 +245,13 @@ export default function StatsHistory() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
           <div className="text-center">
             <div className="text-2xl font-bold">
-              {overall ? `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}%` : <Skeleton className="h-6 w-12 mx-auto" />}
+              {overall ? renderDelta(overall.delta_wpm_vs_previous, "WPM") : <Skeleton className="h-6 w-12 mx-auto" />}
             </div>
             <div className="text-sm text-muted-foreground">Cambio WPM</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold">
-              {overall ? `${overall.delta_comprehension_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_comprehension_vs_previous)}%` : <Skeleton className="h-6 w-12 mx-auto" />}
+              {overall ? renderDelta(overall.delta_comprehension_vs_previous, "Comprensión") : <Skeleton className="h-6 w-12 mx-auto" />}
             </div>
             <div className="text-sm text-muted-foreground">Cambio Comprensión</div>
           </div>
@@ -283,14 +306,11 @@ export default function StatsHistory() {
                 <Skeleton className="h-6 w-16 mx-auto" />
               )}
             </div>
-            <div className="flex items-center text-xs text-green-500 mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              {overall ? (
-                `${overall.delta_wpm_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_wpm_vs_previous)}% vs anterior`
-              ) : (
-                <Skeleton className="h-4 w-16" />
-              )}
-            </div>
+            {overall ? (
+              renderDelta(overall.delta_wpm_vs_previous, "WPM")
+            ) : (
+              <Skeleton className="h-4 w-16" />
+            )}
           </CardContent>
         </Card>
 
@@ -309,14 +329,11 @@ export default function StatsHistory() {
                 <Skeleton className="h-6 w-12 mx-auto" />
               )}
             </div>
-            <div className="flex items-center text-xs text-green-500 mt-1">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              {overall ? (
-                `${overall.delta_comprehension_vs_previous >= 0 ? '+' : ''}${Math.round(overall.delta_comprehension_vs_previous)}% vs anterior`
-              ) : (
-                <Skeleton className="h-4 w-16" />
-              )}
-            </div>
+            {overall ? (
+              renderDelta(overall.delta_comprehension_vs_previous, "Comprensión")
+            ) : (
+              <Skeleton className="h-4 w-16" />
+            )}
           </CardContent>
         </Card>
 

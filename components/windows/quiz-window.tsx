@@ -129,21 +129,29 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
   const handleViewStats = async () => {
     try {
       if (!token) throw new Error("No autenticado")
-      const stats = await rsvpApi.getStats(token)
+      const sessionData = await rsvpApi.getRsvp(sessionId, token)
 
       addWindow("stats", {
         sessionId,
-        stats,
-        score,
-        text,
+        stats: {
+          wpm: sessionData.wpm,
+          reading_time_seconds: sessionData.reading_time_seconds,
+          idealTime: sessionData.ai_estimated_ideal_reading_time_seconds,
+          score: sessionData.quiz_score,
+          feedback: sessionData.feedback ?? `Dificultad: ${sessionData.ai_text_difficulty ?? "N/A"}`,
+        },
+        score: sessionData.quiz_score,
+        text: sessionData.text,
         validation,
         questions,
       })
 
+
       toast({
         title: "Estadísticas cargadas",
         description: "Revisa tu desempeño y el feedback personalizado.",
-      })    } catch (error) {
+      })
+    } catch (error) {
       toast({
         title: "Error",
         description: "No se pudieron cargar las estadísticas. Inténtalo de nuevo.",
@@ -182,17 +190,15 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
             {currentQuestion.options?.map((option, index) => (
               <div
                 key={index}
-                className={`flex items-center space-x-2 rounded-md border ${
-                  isMobile ? 'p-3' : 'p-3'
-                } ${
-                  isSubmitted
+                className={`flex items-center space-x-2 rounded-md border ${isMobile ? 'p-3' : 'p-3'
+                  } ${isSubmitted
                     ? option === currentQuestion.correct_answer
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20"
                       : answers[currentQuestionIndex] === option
                         ? "border-red-500 bg-red-50 dark:bg-red-900/20"
                         : "border-slate-200 dark:border-slate-700"
                     : "border-slate-200 dark:border-slate-700"
-                }`}
+                  }`}
               >
                 <RadioGroupItem value={option} id={`option-${index}`} className="mr-2" />
                 <Label htmlFor={`option-${index}`} className="flex-1">
@@ -205,7 +211,8 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
               </div>
             ))}          </RadioGroup>
         </div>
-      )    } else if (currentQuestion.question_type === "open_ended") {
+      )
+    } else if (currentQuestion.question_type === "open_ended") {
       return (
         <div className="space-y-4">
           <h3 className={`font-medium ${isMobile ? 'text-base' : 'text-lg'}`}>
@@ -262,13 +269,12 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
             <button
               key={index}
               onClick={() => setCurrentQuestionIndex(index)}
-              className={`flex-shrink-0 ${isMobile ? 'w-10 h-10' : 'w-8 h-8'} rounded-full flex items-center justify-center text-xs font-medium ${
-                index === currentQuestionIndex
+              className={`flex-shrink-0 ${isMobile ? 'w-10 h-10' : 'w-8 h-8'} rounded-full flex items-center justify-center text-xs font-medium ${index === currentQuestionIndex
                   ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
                   : isQuestionAnswered(index)
                     ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
                     : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-              }`}
+                }`}
             >
               {index + 1}
             </button>
@@ -280,25 +286,25 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
         </div>
 
         <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'justify-between'}`}>
-          <Button 
-            variant="outline" 
-            onClick={handlePrevQuestion} 
+          <Button
+            variant="outline"
+            onClick={handlePrevQuestion}
             disabled={currentQuestionIndex === 0}
             className={isMobile ? 'w-full' : ''}
           >
             Anterior
           </Button>          <div className={`${isMobile ? 'flex flex-col space-y-2 w-full' : 'flex space-x-2'}`}>
             {isSubmitted ? (
-              <Button 
-                onClick={handleViewStats} 
+              <Button
+                onClick={handleViewStats}
                 className={`flex items-center gap-1 ${isMobile ? 'w-full justify-center' : ''}`}
               >
-                <BarChart className="h-4 w-4" /> 
+                <BarChart className="h-4 w-4" />
                 {isMobile ? 'Estadísticas' : 'Ver Estadísticas'}
               </Button>
             ) : (
-              <Button 
-                onClick={handleSubmit} 
+              <Button
+                onClick={handleSubmit}
                 disabled={questions.some((_, index) => !isQuestionAnswered(index))}
                 className={isMobile ? 'w-full' : ''}
               >
@@ -307,8 +313,8 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
             )}
 
             {!isLastQuestion && (
-              <Button 
-                onClick={handleNextQuestion} 
+              <Button
+                onClick={handleNextQuestion}
                 className={`flex items-center gap-1 ${isMobile ? 'w-full justify-center' : ''}`}
               >
                 {isMobile ? 'Siguiente' : 'Siguiente'} <ArrowRight className="h-4 w-4" />
@@ -317,11 +323,10 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
           </div>
         </div>        {isSubmitted && (
           <div
-            className={`rounded-md text-center ${isMobile ? 'p-3' : 'p-4'} ${
-              score >= 70
+            className={`rounded-md text-center ${isMobile ? 'p-3' : 'p-4'} ${score >= 70
                 ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
                 : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
-            }`}
+              }`}
           >
             <h3 className={`font-bold ${isMobile ? 'text-base' : 'text-lg'}`}>
               Puntuación: {score}%

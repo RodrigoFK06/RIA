@@ -2,7 +2,7 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { rsvpApi } from "@/lib/rsvpApi"
+import { rsvpApi, type StatsResponse } from "@/lib/rsvpApi"
 import { formatDateInLima } from "@/lib/utils"
 
 interface Window {
@@ -26,7 +26,9 @@ interface Session {
   folderId: string | null
   type: "generate" | "custom"
   createdAt: string
-  userId?: string // Agregar userId para filtrado de seguridad
+  userId?: string
+  created_at_local?: string
+  deleted?: boolean // ✅ Agregado
   stats?: {
     wpm: number
     totalTime: number
@@ -103,13 +105,13 @@ interface WorkspaceState {
     scoreData: { name: string; value: number }[]
     topicData: { name: string; value: number }[]
   }
-  
+
   // Load real stats from API
   loadStatsFromAPI: (token: string, userId?: string) => Promise<void>
-  
+
   // Get stats for history/dashboard view
   getStatsHistory: () => any | null
-  
+
   // Refresh stats manually
   refreshStats: (token: string, userId?: string) => Promise<void>
 }
@@ -155,6 +157,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           activeWindow: state.activeWindow === id ? null : state.activeWindow,
         }))
       },
+      
 
       updateWindowPosition: (id, x, y, width, height) => {
         set((state) => ({
@@ -224,14 +227,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             return data.id
           } catch (error: any) {
             console.error("Error creating RSVP session:", error)
-            
+
             // Si es un error de autenticación (401), el token probablemente expiró
             if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
               console.log('🔒 Token expirado detectado en addSession')
               // Lanzar error específico para que el componente lo maneje
               throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
             }
-            
+
             throw error
           }
         } else if (sessionData.type === "custom") {
@@ -277,7 +280,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             return session
           }),
         }))
-        
+
         // Trigger a stats refresh for real-time updates
         console.log(`📊 Estadísticas actualizadas para sesión ${id}:`, stats)
       },
@@ -455,94 +458,182 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         }))
       },
 
-      getSessionStats: (days, userId) => {
+      getSessionStats: (days: number, userId?: string) => {
+        const userStats = get().userStats
+        
+        // 🚀 NUEVA LÓGICA: Usar datos del backend directamente cuando estén disponibles
+        if (userStats?.overall_stats && userId) {
+          const backendStats = userStats.overall_stats
+          
+          // Construir gráficos desde recent_sessions_stats del backend
+          const recentSessions = userStats.recent_sessions_stats || []
+          
+          // Definir tipo para las sesiones del backend
+          type BackendSession = StatsResponse['recent_sessions_stats'][0]
+          
+          // Filtrar por rango de días si es necesario
+          const now = new Date()
+          const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+          
+          const filteredBackendSessions = recentSessions.filter((session: BackendSession) => {
+            const sessionDate = new Date(session.created_at_local || session.created_at)
+            return sessionDate >= startDate && sessionDate <= now
+          })
+          
+          // Construir datos de gráficos directamente desde el backend
+          const sortedSessions = filteredBackendSessions
+            .sort((a: BackendSession, b: BackendSession) => new Date(a.created_at_local || a.created_at).getTime() - 
+                           new Date(b.created_at_local || b.created_at).getTime())
+            .slice(-20) // Últimas 20 sesiones para mejor visualización
+          
+          const wpmData = sortedSessions.map((session: BackendSession) => ({
+            name: formatDateInLima(session.created_at_local || session.created_at),
+            value: session.wpm,
+            fullDate: session.created_at,
+            sessionId: session.session_id,
+          }))
+          
+          const scoreData = sortedSessions
+            .filter((session: BackendSession) => session.quiz_taken)
+            .map((session: BackendSession) => ({
+              name: formatDateInLima(session.created_at_local || session.created_at),
+              value: session.quiz_score,
+              fullDate: session.created_at,
+              sessionId: session.session_id,
+            }))
+          
+          // Distribución de temas desde backend
+          const topicCounts = filteredBackendSessions.reduce((acc: Record<string, number>, session: BackendSession) => {
+            const topic = session.topic || "Sin categoría"
+            acc[topic] = (acc[topic] || 0) + 1
+            return acc
+          }, {})
+          
+          const topicData = Object.entries(topicCounts)
+            .map(([name, value]) => ({ name, value: value as number }))
+            .sort((a, b) => (b.value as number) - (a.value as number))
+            .slice(0, 8)
+          
+          // ✅ DEVOLVER DATOS DEL BACKEND CON MÍNIMO PROCESAMIENTO
+          return {
+            // Usar directamente los valores calculados por el backend
+            avgWpm: Math.round(backendStats.average_wpm),
+            avgScore: Math.round(backendStats.average_quiz_score),
+            totalSessions: filteredBackendSessions.length,
+            totalTime: Math.round(backendStats.total_reading_time_seconds),
+            
+            // Usar las tendencias calculadas por el backend
+            wpmImprovement: Math.round(backendStats.delta_wpm_vs_previous),
+            scoreImprovement: Math.round(backendStats.delta_comprehension_vs_previous),
+            
+            // Gráficos construidos desde datos reales del backend
+            wpmData,
+            scoreData,
+            topicData,
+          }
+        }
+        
+        // 📊 FALLBACK: Cálculo local para compatibilidad (cuando no hay datos del backend)
+        console.log('⚠️ Usando cálculo local - datos del backend no disponibles')
         const now = new Date()
         const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
 
-        // CORREGIDO: Usar sesiones filtradas por usuario si se proporciona userId
-        let allSessions = get().sessions
-        if (userId) {
-          allSessions = allSessions.filter(session => session.userId === userId)
-        }
+        const allSessions: Session[] = userId
+          ? get().sessions.filter((s) => s.userId === userId)
+          : get().sessions
 
-        // Filter sessions within the time range
-        const filteredSessions = allSessions.filter((session) => {
-          const sessionDate = new Date(session.createdAt)
-          return sessionDate >= startDate && sessionDate <= now && session.stats
+        const filteredSessions: Session[] = allSessions.filter((session) => {
+          const sessionDate = new Date(session.created_at_local ?? session.createdAt)
+          return sessionDate >= startDate && sessionDate <= now && !!session.stats
         })
 
-        // Calculate averages
-        const totalWpm = filteredSessions.reduce((sum, session) => sum + (session.stats?.wpm || 0), 0)
-        const totalScore = filteredSessions.reduce((sum, session) => sum + (session.stats?.score || 0), 0)
-        const totalTime = filteredSessions.reduce((sum, session) => sum + (session.stats?.totalTime || 0), 0)
+        if (filteredSessions.length === 0) {
+          return {
+            avgWpm: 0,
+            avgScore: 0,
+            totalSessions: 0,
+            totalTime: 0,
+            wpmImprovement: 0,
+            scoreImprovement: 0,
+            wpmData: [],
+            scoreData: [],
+            topicData: [],
+          }
+        }
 
-        const avgWpm = filteredSessions.length > 0 ? Math.round(totalWpm / filteredSessions.length) : 0
-        const avgScore = filteredSessions.length > 0 ? Math.round(totalScore / filteredSessions.length) : 0
+        const totalWpm = filteredSessions.reduce((sum, s) => sum + (s.stats?.wpm || 0), 0)
+        const avgWpm = Math.round(totalWpm / filteredSessions.length)
 
-        // Calculate improvement based on actual data
-        const sortedSessions = filteredSessions.sort((a, b) => 
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        const quizSessions = filteredSessions.filter((s) => typeof s.stats?.score === "number")
+        const totalScore = quizSessions.reduce((sum, s) => sum + (s.stats?.score || 0), 0)
+        const avgScore = quizSessions.length > 0 ? Math.round(totalScore / quizSessions.length) : 0
+
+        const totalTime = filteredSessions.reduce((sum, s) => sum + (s.stats?.totalTime || 0), 0)
+
+        const sortedSessions = [...filteredSessions].sort(
+          (a, b) =>
+            new Date(a.created_at_local ?? a.createdAt).getTime() -
+            new Date(b.created_at_local ?? b.createdAt).getTime()
         )
-        
-        const firstHalf = sortedSessions.slice(0, Math.floor(sortedSessions.length / 2))
-        const secondHalf = sortedSessions.slice(Math.floor(sortedSessions.length / 2))
-        
-        const firstHalfAvgWpm = firstHalf.length > 0 ? 
-          firstHalf.reduce((sum, s) => sum + (s.stats?.wpm || 0), 0) / firstHalf.length : 0
-        const secondHalfAvgWpm = secondHalf.length > 0 ? 
-          secondHalf.reduce((sum, s) => sum + (s.stats?.wpm || 0), 0) / secondHalf.length : 0
-          
-        const firstHalfAvgScore = firstHalf.length > 0 ? 
-          firstHalf.reduce((sum, s) => sum + (s.stats?.score || 0), 0) / firstHalf.length : 0
-        const secondHalfAvgScore = secondHalf.length > 0 ? 
-          secondHalf.reduce((sum, s) => sum + (s.stats?.score || 0), 0) / secondHalf.length : 0
 
-        const wpmImprovement = firstHalfAvgWpm > 0 ? Math.round(((secondHalfAvgWpm - firstHalfAvgWpm) / firstHalfAvgWpm) * 100) : 0
-        const scoreImprovement = firstHalfAvgScore > 0 ? Math.round(((secondHalfAvgScore - firstHalfAvgScore) / firstHalfAvgScore) * 100) : 0
+        const half = Math.floor(sortedSessions.length / 2)
+        const firstHalf = sortedSessions.slice(0, half)
+        const secondHalf = sortedSessions.slice(half)
 
-        // Generate chart data from real sessions with better temporal information
-        const sortedSessionsForCharts = filteredSessions
-          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-          .slice(-20) // Last 20 sessions for better chart readability
+        const calcAvg = (arr: Session[], key: "wpm" | "score") =>
+          arr.length > 0
+            ? arr.reduce((sum, s) => sum + (s.stats?.[key] || 0), 0) / arr.length
+            : 0
 
-        const wpmData = sortedSessionsForCharts.map((session, index) => ({
-          name: formatDateInLima(session.createdAt),
-          value: session.stats?.wpm || 0,
+        const firstHalfWpm = calcAvg(firstHalf, "wpm")
+        const secondHalfWpm = calcAvg(secondHalf, "wpm")
+        const wpmImprovement = firstHalfWpm > 0
+          ? Math.round(((secondHalfWpm - firstHalfWpm) / firstHalfWpm) * 100)
+          : 0
+
+        const firstHalfScore = calcAvg(firstHalf, "score")
+        const secondHalfScore = calcAvg(secondHalf, "score")
+        const scoreImprovement = firstHalfScore > 0
+          ? Math.round(((secondHalfScore - firstHalfScore) / firstHalfScore) * 100)
+          : 0
+
+        const sortedForCharts = sortedSessions.slice(-20)
+
+        const format = (session: Session, key: "wpm" | "score") => ({
+          name: formatDateInLima(session.created_at_local ?? session.createdAt),
+          value: session.stats?.[key] || 0,
           fullDate: session.createdAt,
-          sessionId: session.id
-        }))
+          sessionId: session.id,
+        })
 
-        const scoreData = sortedSessionsForCharts.map((session, index) => ({
-          name: formatDateInLima(session.createdAt),
-          value: session.stats?.score || 0,
-          fullDate: session.createdAt,
-          sessionId: session.id
-        }))
+        const wpmData = sortedForCharts.map((s) => format(s, "wpm"))
+        const scoreData = sortedForCharts.map((s) => format(s, "score"))
 
-        // Topic distribution from real data with better sorting
-        const topicCounts = filteredSessions.reduce((acc, session) => {
-          const topic = session.topic || "Sin categoría"
+        const topicCounts = filteredSessions.reduce((acc: Record<string, number>, s: Session) => {
+          const topic = s.topic || "Sin categoría"
           acc[topic] = (acc[topic] || 0) + 1
           return acc
-        }, {} as Record<string, number>)
+        }, {})
 
         const topicData = Object.entries(topicCounts)
           .map(([name, value]) => ({ name, value }))
-          .sort((a, b) => b.value - a.value) // Sort by frequency
-          .slice(0, 8) // Top 8 topics for better visualization
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 8)
 
         return {
           avgWpm,
           avgScore,
           totalSessions: filteredSessions.length,
-          totalTime: Math.round(totalTime / 1000), // Convert to seconds
+          totalTime: Math.round(totalTime / 1000),
           wpmImprovement,
           scoreImprovement,
-          wpmData: wpmData.length > 0 ? wpmData : [],
-          scoreData: scoreData.length > 0 ? scoreData : [],
-          topicData: topicData.length > 0 ? topicData : [],
+          wpmData,
+          scoreData,
+          topicData,
         }
       },
+
+
 
       loadStatsFromAPI: async (token: string, userId?: string) => {
         console.log('🔄 Cargando estadísticas desde API para usuario:', userId)
@@ -573,15 +664,14 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 return {
                   id: apiSession.session_id,
-
                   title,
-
                   topic,
                   text,
                   words,
                   folderId: existingSession?.folderId || null,
                   type: "generate" as const,
                   createdAt: apiSession.created_at,
+                  created_at_local: apiSession.created_at_local, // ✅ Agregar campo del backend
                   userId: userId,
                   stats: {
                     wpm: apiSession.wpm,
@@ -612,7 +702,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         } catch (error: any) {
           console.error("Error loading stats from API:", error)
           set({ isLoadingStats: false })
-          
+
           if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
             console.log('🔒 Token expirado detectado en loadStatsFromAPI, limpiando estado')
           }
@@ -630,7 +720,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           console.log('🔄 Refrescando estadísticas para usuario:', userId)
           const statsData = await rsvpApi.getStats(token)
           set({ userStats: statsData, isLoadingStats: false })
-          
+
           if (userId) {
             if (statsData.recent_sessions_stats) {
               const sessionsMap = new Map(get().sessions.map(s => [s.id, s]));
@@ -653,7 +743,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
                 const sessionData: Session = {
                   id: apiSession.session_id,
-
                   title,
                   topic,
                   text,
@@ -661,6 +750,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
                   folderId: existingSession?.folderId || null,
                   type: "generate" as const,
                   createdAt: apiSession.created_at,
+                  created_at_local: apiSession.created_at_local, // ✅ Agregar campo del backend
                   userId: userId,
                   stats: {
                     wpm: apiSession.wpm,
@@ -685,7 +775,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         } catch (error: any) {
           console.error("Error refreshing stats:", error)
           set({ isLoadingStats: false })
-          
+
           if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
             console.log('🔒 Token expirado detectado en refreshStats, limpiando estado')
           }
@@ -703,15 +793,15 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           // Limpiar sesiones y contenido relacionado
           sessions: [],
           activeSession: null,
-          
+
           // Limpiar ventanas y estado visual
           windows: [],
           activeWindow: null,
-          
+
           // Limpiar estadísticas y métricas
           userStats: null,
           isLoadingStats: false,
-          
+
           // Limpiar proyectos y estructura organizacional
           projects: [],
           activeProject: null,

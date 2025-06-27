@@ -8,9 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 // Convierte una fecha UTC a la hora local de Lima (Perú)
 export function formatDateInLima(
   utcDate: string | number | Date,
-  withTime = false,
+  withTime = false
 ): string {
-  const date = new Date(utcDate)
   const options: Intl.DateTimeFormatOptions = {
     timeZone: "America/Lima",
     year: "numeric",
@@ -25,5 +24,6 @@ export function formatDateInLima(
     options.hour12 = false
   }
 
-  return date.toLocaleString("es-PE", options)
+  return new Intl.DateTimeFormat("es-PE", options).format(new Date(utcDate))
 }
+

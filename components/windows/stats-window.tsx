@@ -1,13 +1,16 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import WindowFrame from "@/components/window-frame"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useWorkspaceStore } from "@/lib/store"
 import { BarChart, BookOpen, MessageSquare, Share2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { StatsResponse, QuizValidateResponse, QuizQuestion } from "@/lib/rsvpApi"
+import { StatsResponse, QuizValidateResponse, QuizQuestion, RsvpSession } from "@/lib/rsvpApi"
 import { useBreakpoint } from "@/hooks/use-breakpoint"
+import { rsvpApi } from "@/lib/rsvpApi"
+import { useAuthStore } from "@/lib/auth-store"
 
 interface StatsWindowProps {
   windowData: {
@@ -18,10 +21,10 @@ interface StatsWindowProps {
       sessionId: string
       stats: StatsResponse | {
         wpm: number
-        reading_time_seconds: number
-        idealTime: number
+        reading_time_seconds?: number
+        idealTime?: number
         score: number
-        feedback: string
+        feedback?: string
       }
       score: number
       text: string
@@ -33,26 +36,64 @@ interface StatsWindowProps {
 
 export default function StatsWindow({ windowData }: StatsWindowProps) {
   const { addWindow } = useWorkspaceStore()
-  const { isMobile, isTablet } = useBreakpoint()
+  const { isMobile } = useBreakpoint()
+  const { token } = useAuthStore()
 
   const stats = windowData.data?.stats
+
+  const [sessionStatsFetched, setSessionStatsFetched] = useState<{
+    wpm: number
+    readingTime: number
+    idealTime: number
+    score: number
+    feedback: string
+  } | null>(null)
+
+  const sessionId = windowData.data?.sessionId || ""
+
+  useEffect(() => {
+    const needsFetch =
+      stats &&
+      "wpm" in stats &&
+      (stats.reading_time_seconds === undefined ||
+        stats.idealTime === undefined ||
+        stats.score === undefined)
+
+    if (needsFetch && sessionId && token) {
+      rsvpApi
+        .getRsvp(sessionId, token)
+        .then((session: RsvpSession) => {
+          setSessionStatsFetched({
+            wpm: session.wpm ?? 0,
+            readingTime: session.reading_time_seconds ?? 0,
+            idealTime:
+              session.ai_estimated_ideal_reading_time_seconds ??
+              Math.round((800 / (session.wpm || 1)) * 60),
+            score: session.quiz_score ?? 0,
+            feedback: session.personalized_feedback ?? ""
+          })
+        })
+        .catch((err) => {
+          console.error("❌ Error al obtener la sesión individual:", err)
+        })
+    }
+  }, [stats, sessionId, token])
 
   const overall = (stats as StatsResponse)?.overall_stats
   const last = (stats as StatsResponse)?.recent_sessions_stats?.[0]
 
-  // ✅ Sesión individual detectada si tiene "wpm" directamente
-  const sessionStats = stats && 'wpm' in stats
-    ? {
-      wpm: stats.wpm,
-      readingTime: stats.reading_time_seconds,
-      idealTime: stats.idealTime,
-      score: stats.score,
-      feedback: stats.feedback,
-    }
-    : null
+  const sessionStats = sessionStatsFetched ||
+    (stats && 'wpm' in stats
+      ? {
+        wpm: stats.wpm,
+        readingTime: stats.reading_time_seconds ?? 0,
+        idealTime: stats.idealTime ?? Math.round((800 / stats.wpm) * 60),
+        score: stats.score,
+        feedback: stats.feedback ?? ""
+      }
+      : null)
 
   const score = sessionStats?.score ?? windowData.data?.score ?? 0
-  const sessionId = windowData.data?.sessionId || ""
   const validation = windowData.data?.validation
   const questions = windowData.data?.questions || []
 
@@ -106,7 +147,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                   <CardTitle className="font-medium text-sm">Velocidad de Lectura</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="font-bold text-2xl">{overall?.average_wpm ?? sessionStats?.wpm ?? 0} WPM</div>
+                  <div className="font-bold text-2xl">{sessionStats?.wpm ?? overall?.average_wpm ?? 0} WPM</div>
                   <p className="text-slate-500 mt-1 text-xs">Palabras por minuto</p>
                 </CardContent>
               </Card>
@@ -194,11 +235,7 @@ export default function StatsWindow({ windowData }: StatsWindowProps) {
                 </div>
 
                 <div className={`mt-6 flex ${isMobile ? 'justify-center' : 'justify-end'}`}>
-                  <Button
-                    variant="outline"
-                    size={isMobile ? "default" : "sm"}
-                    className="flex items-center gap-1"
-                  >
+                  <Button variant="outline" size={isMobile ? "default" : "sm"} className="flex items-center gap-1">
                     <Share2 className="h-4 w-4" /> Compartir Resultados
                   </Button>
                 </div>

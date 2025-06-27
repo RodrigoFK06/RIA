@@ -1,14 +1,26 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useWorkspaceStore } from "@/lib/store"
 import { useAuthStore } from "@/lib/auth-store"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { formatDistanceToNow } from "date-fns"
 import { es } from "date-fns/locale"
@@ -22,22 +34,29 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("date")
   const [filterFolder, setFilterFolder] = useState("")
-  const { folders, setActiveSession, deleteSessionById, getUserSessions } = useWorkspaceStore()
+  const {
+    folders,
+    setActiveSession,
+    deleteSessionById,
+    getUserSessions,
+  } = useWorkspaceStore()
   const { user, token } = useAuthStore()
   const { toast } = useToast()
 
-  // CRÍTICO: Usar solo sesiones del usuario actual para evitar contaminación de datos
-  const userSessions = user?.id ? getUserSessions(user.id) : []
+  const userSessions = user?.id
+    ? getUserSessions(user.id).filter((s) => !s.deleted)
+    : []
 
-  // Filter and sort sessions - USANDO SESIONES FILTRADAS POR USUARIO
   const filteredSessions = userSessions
     .filter((session) => {
       const matchesSearch = searchQuery
-        ? session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          session.topic.toLowerCase().includes(searchQuery.toLowerCase())
+        ? session.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          session.topic?.toLowerCase().includes(searchQuery.toLowerCase())
         : true
 
-      const matchesFolder = filterFolder ? session.folderId === filterFolder : true
+      const matchesFolder = filterFolder && filterFolder !== "all"
+        ? session.folderId === filterFolder
+        : true
 
       return matchesSearch && matchesFolder
     })
@@ -57,16 +76,28 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
     setActiveView("workspace")
   }
 
-  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+  const handleDeleteSession = async (
+    e: React.MouseEvent,
+    sessionId: string
+  ) => {
     e.stopPropagation()
     if (!token) return
-    const confirmed = window.confirm("¿Deseas eliminar esta sesión del historial?")
+    const confirmed = window.confirm(
+      "¿Deseas eliminar esta sesión del historial?"
+    )
     if (!confirmed) return
     try {
       await deleteSessionById(sessionId, token)
-      toast({ title: "Sesión eliminada", description: "La sesión ha sido eliminada correctamente" })
+      toast({
+        title: "Sesión eliminada",
+        description: "La sesión ha sido eliminada correctamente",
+      })
     } catch (error) {
-      toast({ title: "Error", description: "No se pudo eliminar la sesión", variant: "destructive" })
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la sesión",
+        variant: "destructive",
+      })
     }
   }
 
@@ -147,7 +178,6 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
                       <span>{session.stats.wpm} WPM</span>
                     </div>
                   )}
-
                   {session.stats?.score && (
                     <div className="flex items-center">
                       <BarChart3 className="h-4 w-4 mr-1 text-slate-500" />
@@ -155,19 +185,23 @@ export default function RecentSessions({ setActiveView }: RecentSessionsProps) {
                     </div>
                   )}
                 </div>
-
                 <div className="mt-2 text-sm text-slate-500 line-clamp-2">
-                  {session.text ? session.text.substring(0, 100) + "..." : "Sin contenido"}
+                  {session.text
+                    ? session.text.substring(0, 100) + "..."
+                    : "Sin contenido"}
                 </div>
               </CardContent>
               <CardFooter>
-                <div className="text-xs text-slate-500">Tema: {session.topic}</div>
+                <div className="text-xs text-slate-500">
+                  Tema: {session.topic}
+                </div>
               </CardFooter>
             </Card>
           ))
         ) : (
           <div className="col-span-full text-center py-8 text-slate-500">
-            No se encontraron sesiones que coincidan con los criterios de búsqueda.
+            No se encontraron sesiones que coincidan con los criterios de
+            búsqueda.
           </div>
         )}
       </div>
