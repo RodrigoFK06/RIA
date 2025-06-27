@@ -350,7 +350,9 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {overall ? `${overall.average_wpm.toFixed(2)} WPM` : <Skeleton className="h-6 w-24" />}
+                    {typeof overall?.average_wpm === "number"
+                      ? `${overall.average_wpm.toFixed(2)} WPM`
+                      : <Skeleton className="h-6 w-24" />}
                   </div>
                   <p className="text-xs text-slate-500 mt-1">Mejora tu velocidad con práctica regular</p>
                 </CardContent>
