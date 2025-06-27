@@ -69,7 +69,7 @@ export default function WindowFrame({
         y: 0,
       }
     }
-    
+
     if (isTablet) {
       const adjustedWidth = Math.min(initialWidth, windowSize.width * 0.9)
       const adjustedHeight = Math.min(initialHeight, windowSize.height * 0.9)
@@ -156,7 +156,16 @@ export default function WindowFrame({
   return (
     <Rnd
       ref={windowRef}
-      default={responsiveDimensions}
+      size={
+        isMaximized || isMobile
+          ? { width: "100%", height: "100%" }
+          : { width: responsiveDimensions.width, height: responsiveDimensions.height }
+      }
+      position={
+        isMaximized || isMobile
+          ? { x: 0, y: 0 }
+          : { x: responsiveDimensions.x, y: responsiveDimensions.y }
+      }
       minWidth={isMobile ? windowSize.width : minWidth}
       minHeight={isMobile ? windowSize.height : minHeight}
       bounds="parent"
@@ -164,14 +173,6 @@ export default function WindowFrame({
       onResizeStop={handleResizeStop}
       disableDragging={isMaximized || isMobile}
       enableResizing={!isMobile}
-      size={isMaximized || isMobile ? 
-        { width: "100%", height: "100%" } : 
-        undefined
-      }
-      position={isMaximized || isMobile ? 
-        { x: 0, y: 0 } : 
-        undefined
-      }
       style={{
         zIndex: activeWindow === id ? 10 : 1,
         transition: "box-shadow 0.2s ease",
@@ -183,6 +184,7 @@ export default function WindowFrame({
         className,
       )}
     >
+
       <div
         className={cn(
           "flex items-center justify-between bg-slate-100 dark:bg-slate-800",
@@ -198,23 +200,23 @@ export default function WindowFrame({
         </div>
         <div className="flex items-center space-x-1">
           {!isMobile && (
-            <button 
-              onClick={handleMinimize} 
+            <button
+              onClick={handleMinimize}
               className="p-1 rounded-sm hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               <Minus className="h-3 w-3" />
             </button>
           )}
           {!isMobile && (
-            <button 
-              onClick={handleMaximize} 
+            <button
+              onClick={handleMaximize}
               className="p-1 rounded-sm hover:bg-slate-200 dark:hover:bg-slate-700"
             >
               {isMaximized ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
             </button>
           )}
-          <button 
-            onClick={handleClose} 
+          <button
+            onClick={handleClose}
             className={cn(
               "rounded-sm hover:bg-red-100 dark:hover:bg-red-900 text-red-500",
               isMobile ? "p-2" : "p-1"

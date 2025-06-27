@@ -1,0 +1,112 @@
+"filename", "language", "JSON", "JSON with Comments", "JavaScript", "Markdown", "TypeScript", "TypeScript JSX", "PostCSS", "YAML", "XML", "comment", "blank", "total"
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\.eslintrc.json", "JSON with Comments", 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\AUTHENTICATION_FIXES.md", "Markdown", 0, 0, 0, 137, 0, 0, 0, 0, 0, 0, 40, 177
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\DELTA_RENDERING_IMPROVEMENT.md", "Markdown", 0, 0, 0, 81, 0, 0, 0, 0, 0, 0, 25, 106
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\METRICS_BACKEND_SYNC_REFACTOR.md", "Markdown", 0, 0, 0, 120, 0, 0, 0, 0, 0, 0, 30, 150
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\METRICS_IMPROVEMENTS.md", "Markdown", 0, 0, 0, 127, 0, 0, 0, 0, 0, 0, 37, 164
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\SECURITY_VERIFICATION.md", "Markdown", 0, 0, 0, 77, 0, 0, 0, 0, 0, 0, 21, 98
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\SESSION_HISTORY_FIXES.md", "Markdown", 0, 0, 0, 138, 0, 0, 0, 0, 0, 0, 48, 186
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\SESSION_TITLE_FIX_SUMMARY.md", "Markdown", 0, 0, 0, 108, 0, 0, 0, 0, 0, 0, 34, 142
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\WINDOW_POSITIONING_SYSTEM.md", "Markdown", 0, 0, 0, 150, 0, 0, 0, 0, 0, 0, 28, 178
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\WINDOW_SIZING_DEBUG.md", "Markdown", 0, 0, 0, 132, 0, 0, 0, 0, 0, 0, 41, 173
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\WINDOW_SIZING_FIX_SOLUTION.md", "Markdown", 0, 0, 0, 158, 0, 0, 0, 0, 0, 0, 43, 201
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\auth\forgot-password\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 104, 0, 0, 0, 1, 12, 117
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\auth\login\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 121, 0, 0, 0, 0, 12, 133
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\auth\register\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 148, 0, 0, 0, 0, 11, 159
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\globals.css", "PostCSS", 0, 0, 0, 0, 0, 0, 56, 0, 0, 0, 21, 77
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\layout.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 4, 39
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 6, 41
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\app\settings\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 371, 0, 0, 0, 0, 23, 394
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components.json", "JSON", 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 21
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\auth-guard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 51, 0, 0, 0, 6, 14, 71
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\charts.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 113, 0, 0, 0, 3, 18, 134
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\dashboard.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 380, 0, 0, 0, 4, 27, 411
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\data-loader.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 37, 0, 0, 0, 5, 10, 52
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\idle-manager.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 79, 0, 0, 0, 8, 18, 105
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\metrics-overview.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 287, 0, 0, 0, 12, 25, 324
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\recent-sessions.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 197, 0, 0, 0, 0, 14, 211
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\sidebar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 628, 0, 0, 0, 10, 41, 679
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\stats-history.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 457, 0, 0, 0, 8, 30, 495
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\theme-provider.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\theme-toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 4, 28
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\toaster.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 4, 25
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\accordion.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 50, 0, 0, 0, 0, 9, 59
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\alert-dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 127, 0, 0, 0, 0, 15, 142
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\alert.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 38, 0, 0, 0, 0, 7, 45
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\aspect-ratio.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 4, 8
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\avatar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 44, 0, 0, 0, 0, 7, 51
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\badge.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 31, 0, 0, 0, 0, 6, 37
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\breadcrumb.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 11, 116
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\button.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 51, 0, 0, 0, 0, 6, 57
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\calendar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 61, 0, 0, 0, 0, 6, 67
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 71, 0, 0, 0, 0, 9, 80
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\carousel.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 232, 0, 0, 0, 0, 31, 263
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\chart.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 327, 0, 0, 0, 2, 37, 366
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\checkbox.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 26, 0, 0, 0, 0, 5, 31
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\collapsible.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 6, 21
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\command.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 136, 0, 0, 0, 0, 18, 154
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\context-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 182, 0, 0, 0, 0, 19, 201
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\dialog.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 88, 0, 0, 0, 0, 14, 102
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\drawer.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 105, 0, 0, 0, 0, 14, 119
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\dropdown-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 182, 0, 0, 0, 0, 19, 201
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\form.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 132, 0, 0, 0, 0, 26, 158
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\hover-card.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 7, 30
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\input-otp.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 63, 0, 0, 0, 0, 9, 72
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\input.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 4, 23
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\label.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 6, 20
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\menubar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 217, 0, 0, 0, 0, 20, 237
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\navigation-menu.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 117, 0, 0, 0, 0, 12, 129
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\pagination.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 107, 0, 0, 0, 0, 11, 118
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\popover.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 7, 32
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\progress.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 5, 29
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\radio-group.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 39, 0, 0, 0, 0, 6, 45
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\resizable.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 39, 0, 0, 0, 0, 7, 46
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\scroll-area.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 6, 41
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\select.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 135, 0, 0, 0, 0, 15, 150
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\separator.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 5, 27
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\sheet.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 125, 0, 0, 0, 0, 16, 141
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\sidebar.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 697, 0, 0, 0, 12, 55, 764
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\skeleton.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 3, 16
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\slider.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 5, 29
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\sonner.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 26, 0, 0, 0, 0, 6, 32
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\switch.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 5, 30
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\table.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 107, 0, 0, 0, 0, 11, 118
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\tabs.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 48, 0, 0, 0, 0, 8, 56
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\textarea.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 4, 23
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\toast.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 99, 0, 0, 0, 0, 13, 112
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\toaster.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 4, 36
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\toggle-group.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 52, 0, 0, 0, 0, 10, 62
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\toggle.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 39, 0, 0, 0, 0, 7, 46
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\tooltip.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 8, 31
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\use-mobile.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 5, 20
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\ui\use-toast.ts", "TypeScript", 0, 0, 0, 0, 160, 0, 0, 0, 0, 3, 32, 195
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\window-frame.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 212, 0, 0, 0, 5, 19, 236
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\windows\assistant-window.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 169, 0, 0, 0, 2, 18, 189
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\windows\paragraph-window.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 129, 0, 0, 0, 6, 20, 155
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\windows\quiz-window.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 308, 0, 0, 0, 4, 33, 345
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\windows\reader-window.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 281, 0, 0, 0, 7, 38, 326
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\windows\stats-window.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 228, 0, 0, 0, 0, 22, 250
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\windows\topic-window.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 158, 0, 0, 0, 2, 18, 178
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\components\workspace.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 77, 0, 0, 0, 0, 8, 85
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\hooks\use-breakpoint.ts", "TypeScript", 0, 0, 0, 0, 57, 0, 0, 0, 0, 1, 14, 72
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\hooks\use-idle-timer.ts", "TypeScript", 0, 0, 0, 0, 94, 0, 0, 0, 0, 0, 17, 111
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\hooks\use-metrics-updates.ts", "TypeScript", 0, 0, 0, 0, 40, 0, 0, 0, 0, 8, 11, 59
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\hooks\use-mobile.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 5, 20
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\hooks\use-toast.ts", "TypeScript", 0, 0, 0, 0, 155, 0, 0, 0, 0, 2, 32, 189
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\lib\api.ts", "TypeScript", 0, 0, 0, 0, 14, 0, 0, 0, 0, 1, 7, 22
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\lib\auth-store.ts", "TypeScript", 0, 0, 0, 0, 132, 0, 0, 0, 0, 7, 14, 153
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\lib\config.ts", "TypeScript", 0, 0, 0, 0, 8, 0, 0, 0, 0, 3, 2, 13
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\lib\rsvpApi.ts", "TypeScript", 0, 0, 0, 0, 185, 0, 0, 0, 0, 2, 26, 213
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\lib\store.ts", "TypeScript", 0, 0, 0, 0, 693, 0, 0, 0, 0, 41, 122, 856
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\lib\utils.ts", "TypeScript", 0, 0, 0, 0, 23, 0, 0, 0, 0, 1, 6, 30
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\next.config.mjs", "JavaScript", 0, 0, 12, 0, 0, 0, 0, 0, 0, 1, 2, 15
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\package-lock.json", "JSON", 6563, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 6564
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\package.json", "JSON", 78, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 79
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\pnpm-lock.yaml", "YAML", 0, 0, 0, 0, 0, 0, 0, 5486, 0, 0, 1186, 6672
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\postcss.config.mjs", "JavaScript", 0, 0, 6, 0, 0, 0, 0, 0, 0, 1, 2, 9
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\public\placeholder-logo.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\public\placeholder.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\styles\globals.css", "PostCSS", 0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 5, 95
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\tailwind.config.ts", "TypeScript", 0, 0, 0, 0, 79, 0, 0, 0, 0, 0, 3, 82
+"c:\Bytecore\Clientes\Carlos Rojas\RIA\tsconfig.json", "JSON with Comments", 0, 27, 0, 0, 0, 0, 0, 0, 0, 0, 1, 28
+"Total", "-", 6662, 30, 18, 1228, 1640, 8904, 146, 5486, 2, 168, 2859, 27143
