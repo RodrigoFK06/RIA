@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { useWorkspaceStore } from "@/lib/store"
 import { useToast } from "@/hooks/use-toast"
-import { Play, Pause, SkipBack, SkipForward, CheckCircle2, AlignLeft } from "lucide-react"
+import { Play, Pause, SkipBack, SkipForward, CheckCircle2, AlignLeft, Loader2 } from "lucide-react"
 import { rsvpApi } from "@/lib/rsvpApi"
 import { useAuthStore } from "@/lib/auth-store"
 import { Progress } from "@/components/ui/progress"
@@ -35,6 +35,7 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
     wordsPerMinute: number
   } | null>(null)
   const [paragraphWindowId, setParagraphWindowId] = useState<string | null>(null)
+  const [isStartingQuiz, setIsStartingQuiz] = useState(false)
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const { windows, addWindow, updateWindowData } = useWorkspaceStore()
@@ -178,6 +179,7 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
   }
 
   const handleStartQuiz = async () => {
+    setIsStartingQuiz(true)
     try {
       if (!token) throw new Error("No autenticado")
       const data = await rsvpApi.createQuiz({ rsvp_session_id: sessionId }, token)
@@ -199,6 +201,8 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
         description: "No se pudieron cargar las preguntas. Inténtalo de nuevo.",
         variant: "destructive",
       })
+    } finally {
+      setIsStartingQuiz(false)
     }
   }
 
@@ -250,8 +254,9 @@ export default function ReaderWindow({ windowData }: ReaderWindowProps) {
               )}
 
               <div className="pt-4">
-                <Button onClick={handleStartQuiz} className="w-full">
-                  Iniciar Evaluación
+                <Button onClick={handleStartQuiz} disabled={isStartingQuiz} className="w-full flex items-center gap-1">
+                  {isStartingQuiz && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isStartingQuiz ? "Iniciando Evaluación..." : "Iniciar Evaluación"}
                 </Button>
                 <Button onClick={handleReset} variant="outline" className="w-full mt-2">
                   Reiniciar Lectura

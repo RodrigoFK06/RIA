@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useWorkspaceStore } from "@/lib/store"
 import { useBreakpoint } from "@/hooks/use-breakpoint"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle, XCircle, ArrowRight, BarChart } from "lucide-react"
+import { CheckCircle, XCircle, ArrowRight, BarChart, Loader2 } from "lucide-react"
 import { rsvpApi, QuizQuestion, QuizValidateResponse } from "@/lib/rsvpApi"
 import { useAuthStore } from "@/lib/auth-store"
 
@@ -33,6 +33,8 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
   const [answers, setAnswers] = useState<string[]>([])
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [score, setScore] = useState(0)
+  const [isValidatingQuiz, setIsValidatingQuiz] = useState(false)
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
 
   const { addWindow, updateSessionStats } = useWorkspaceStore()
   const { isMobile, isTablet } = useBreakpoint()
@@ -79,6 +81,7 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
       return
     }
 
+    setIsValidatingQuiz(true)
     try {
       const payload = {
         rsvp_session_id: sessionId,
@@ -121,12 +124,13 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
         title: "Quiz completado",
         description: `Puntuación: ${res.overall_score}% - ¡Estadísticas actualizadas!`,
       })
-    } catch (err) {
-      toast({ title: "Error", description: "No se pudo enviar el quiz", variant: "destructive" })
+    } finally {
+      setIsValidatingQuiz(false)
     }
   }
 
   const handleViewStats = async () => {
+    setIsLoadingStats(true)
     try {
       if (!token) throw new Error("No autenticado")
       const sessionData = await rsvpApi.getRsvp(sessionId, token)
@@ -146,7 +150,6 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
         questions,
       })
 
-
       toast({
         title: "Estadísticas cargadas",
         description: "Revisa tu desempeño y el feedback personalizado.",
@@ -157,6 +160,8 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
         description: "No se pudieron cargar las estadísticas. Inténtalo de nuevo.",
         variant: "destructive",
       })
+    } finally {
+      setIsLoadingStats(false)
     }
   }
 
@@ -297,18 +302,21 @@ export default function QuizWindow({ windowData }: QuizWindowProps) {
             {isSubmitted ? (
               <Button
                 onClick={handleViewStats}
+                disabled={isLoadingStats}
                 className={`flex items-center gap-1 ${isMobile ? 'w-full justify-center' : ''}`}
               >
-                <BarChart className="h-4 w-4" />
-                {isMobile ? 'Estadísticas' : 'Ver Estadísticas'}
+                {isLoadingStats && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isLoadingStats ? 'Cargando...' : <BarChart className="h-4 w-4" />}
+                {isLoadingStats ? '' : (isMobile ? 'Estadísticas' : 'Ver Estadísticas')}
               </Button>
             ) : (
               <Button
                 onClick={handleSubmit}
-                disabled={questions.some((_, index) => !isQuestionAnswered(index))}
-                className={isMobile ? 'w-full' : ''}
+                disabled={questions.some((_, index) => !isQuestionAnswered(index)) || isValidatingQuiz}
+                className={`flex items-center gap-1 ${isMobile ? 'w-full' : ''}`}
               >
-                Enviar Respuestas
+                {isValidatingQuiz && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isValidatingQuiz ? 'Enviando...' : 'Enviar Respuestas'}
               </Button>
             )}
 

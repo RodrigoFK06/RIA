@@ -10,13 +10,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { BookOpen, BarChart3, History, Sparkles, Clock, TrendingUp, Brain, PlusCircle, Activity } from "lucide-react"
+import { BookOpen, BarChart3, History, Sparkles, Clock, TrendingUp, Brain, PlusCircle, Activity, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import MetricsOverview from "@/components/metrics-overview"
 import RecentSessions from "@/components/recent-sessions"
 import StatsHistory from "@/components/stats-history"
 import { useBreakpoint } from "@/hooks/use-breakpoint"
-import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -64,12 +63,11 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
   const [newProjectName, setNewProjectName] = useState("")
   const [newProjectFolder, setNewProjectFolder] = useState("")
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false)
+  const [isCreatingSession, setIsCreatingSession] = useState(false)
   const { addSession, folders, addProject, userStats, isLoadingStats } = useWorkspaceStore()
   const { user, token } = useAuthStore()
   const { toast } = useToast()
   const { isMobile, isTablet } = useBreakpoint()
-  const [isLoading, setIsLoading] = useState(false)
-
 
   const overall = userStats?.overall_stats
 
@@ -92,6 +90,7 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
       return
     }
 
+    setIsCreatingSession(true)
     try {
       // Create a new session - PASAR userId PARA FILTRADO DE SEGURIDAD
       const sessionId = await addSession({
@@ -126,6 +125,8 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
           variant: "destructive",
         })
       }
+    } finally {
+      setIsCreatingSession(false)
     }
   }
 
@@ -300,13 +301,13 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 <CardFooter>
                   <Button
                     onClick={() => handleCreateSession("generate")}
-                    disabled={!topic.trim() || isLoading}
-                    className="w-full"
+                    disabled={!topic.trim() || isCreatingSession}
+                    className="flex items-center gap-1 w-full"
                   >
-                    {isLoading ? (
+                    {isCreatingSession ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        {isMobile ? "Generando..." : "Generando..."}
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creando...
                       </>
                     ) : (
                       isMobile ? "Generar" : "Generar Contenido"
@@ -340,10 +341,17 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 <CardFooter>
                   <Button
                     onClick={() => handleCreateSession("custom")}
-                    disabled={!customText.trim()}
-                    className="w-full"
+                    disabled={!customText.trim() || isCreatingSession}
+                    className="flex items-center gap-1 w-full"
                   >
-                    Usar Texto Personalizado
+                    {isCreatingSession ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Procesando...
+                      </>
+                    ) : (
+                      "Usar Texto Personalizado"
+                    )}
                   </Button>
                 </CardFooter>
               </Card>

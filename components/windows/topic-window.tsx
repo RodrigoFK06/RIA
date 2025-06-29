@@ -23,7 +23,8 @@ interface TopicWindowProps {
 
 export default function TopicWindow({ windowData }: TopicWindowProps) {
   const [topic, setTopic] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isProcessingCustomText, setIsProcessingCustomText] = useState(false)
   const [customText, setCustomText] = useState("")
   const { addWindow } = useWorkspaceStore()
   const { toast } = useToast()
@@ -40,7 +41,7 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
       return
     }
 
-    setIsLoading(true)
+    setIsGenerating(true)
     try {
       if (!token) throw new Error("No autenticado")
       const data = await rsvpApi.createRsvp({ topic }, token)
@@ -62,7 +63,7 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsGenerating(false)
     }
   }
 
@@ -76,7 +77,7 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
       return
     }
 
-    setIsLoading(true)
+    setIsProcessingCustomText(true)
     try {
       if (!token) throw new Error("No autenticado")
 
@@ -103,7 +104,7 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsProcessingCustomText(false)
     }
   }
 
@@ -148,17 +149,20 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
 
             <Button
               onClick={handleGenerateContent}
-              disabled={isLoading || !topic.trim()}
-              className="w-full"
+              disabled={isGenerating || !topic.trim()}
+              className="flex items-center gap-1 w-full"
               size={isMobile ? "default" : "default"}
             >
-              {isLoading ? (
+              {isGenerating ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isMobile ? 'Generando...' : 'Generando...'}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generando...
                 </>
               ) : (
-                isMobile ? 'Generar' : 'Generar Contenido'
+                <>
+                  <BookOpen className="h-4 w-4" />
+                  {isMobile ? 'Generar' : 'Generar Contenido'}
+                </>
               )}
             </Button>
           </TabsContent>
@@ -179,11 +183,21 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
 
             <Button
               onClick={handleUseCustomText}
-              disabled={!customText.trim()}
-              className="w-full"
+              disabled={isProcessingCustomText || !customText.trim()}
+              className="flex items-center gap-1 w-full"
               size={isMobile ? "default" : "default"}
             >
-              {isMobile ? 'Usar Texto' : 'Usar Texto Personalizado'}
+              {isProcessingCustomText ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Procesando...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  {isMobile ? 'Usar Texto' : 'Usar Texto Personalizado'}
+                </>
+              )}
             </Button>
           </TabsContent>
         </Tabs>

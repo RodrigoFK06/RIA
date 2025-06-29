@@ -182,8 +182,9 @@ export default function AssistantWindow({ windowData }: AssistantWindowProps) {
                 }
               }}
             />
-            <Button onClick={handleSendMessage} disabled={isLoading || !input.trim()} className="h-10 px-4">
+            <Button onClick={handleSendMessage} disabled={isLoading || !input.trim()} className="h-10 px-4 flex items-center gap-1">
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {isLoading ? "Enviando..." : ""}
             </Button>
           </div>
           <p className="text-xs text-slate-500 mt-2">Presiona Enter para enviar, Shift+Enter para nueva línea</p>
