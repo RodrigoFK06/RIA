@@ -157,7 +157,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
           activeWindow: state.activeWindow === id ? null : state.activeWindow,
         }))
       },
-      
+
 
       updateWindowPosition: (id, x, y, width, height) => {
         set((state) => ({
@@ -200,64 +200,40 @@ export const useWorkspaceStore = create<WorkspaceState>()(
       },
 
       addSession: async (sessionData, token, userId) => {
-        // If it's a generate type, fetch content from API
-        if (sessionData.type === "generate" && token) {
-          try {
-            console.log('🎯 Creando sesión RSVP para tema:', sessionData.topic)
-            // Use the real API to create RSVP session
-            const data = await rsvpApi.createRsvp({ topic: sessionData.topic }, token)
-            const newSession: Session = {
-              id: data.id, // Use real backend ID
-              title: sessionData.title || `Sesión sobre ${sessionData.topic}`,
-              topic: sessionData.topic,
-              text: data.text,
-              words: data.words,
-              folderId: sessionData.folderId,
-              type: "generate",
-              createdAt: new Date().toISOString(),
-              userId: userId, // Asignar userId para filtrado de seguridad
-            }
+        if (!token) throw new Error("Token requerido para crear sesión")
 
-            set((state) => ({
-              sessions: [newSession, ...state.sessions],
-              activeSession: data.id,
-            }))
+        try {
+          console.log('🎯 Creando sesión RSVP para tema:', sessionData.topic)
 
-            console.log('✅ Sesión RSVP creada exitosamente:', data.id)
-            return data.id
-          } catch (error: any) {
-            console.error("Error creating RSVP session:", error)
+          // Llama a la API SIEMPRE (ahora también para texto personalizado con "__raw__:")
+          const data = await rsvpApi.createRsvp({ topic: sessionData.topic }, token)
 
-            // Si es un error de autenticación (401), el token probablemente expiró
-            if (error?.status === 401 || error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
-              console.log('🔒 Token expirado detectado en addSession')
-              // Lanzar error específico para que el componente lo maneje
-              throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
-            }
-
-            throw error
-          }
-        } else if (sessionData.type === "custom") {
-          // For custom text, create session without API call
-          const id = `custom-${Date.now()}`
           const newSession: Session = {
-            id,
-            ...sessionData,
-            words: sessionData.text.split(/\s+/).filter(word => word.length > 0),
+            id: data.id,  // ✅ ID real del backend
+            title: sessionData.title || `Sesión sobre ${sessionData.topic}`,
+            topic: sessionData.topic,
+            text: data.text,
+            words: data.words,
+            folderId: sessionData.folderId,
+            type: sessionData.type,  // puede ser "generate" o "custom"
             createdAt: new Date().toISOString(),
-            userId: userId, // Asignar userId para filtrado de seguridad
+            userId,
           }
 
           set((state) => ({
             sessions: [newSession, ...state.sessions],
-            activeSession: id,
+            activeSession: data.id,
           }))
 
-          console.log('✅ Sesión personalizada creada:', id)
-          return id
+          console.log('✅ Sesión creada exitosamente:', data.id)
+          return data.id
+        } catch (error: any) {
+          console.error("Error creating RSVP session:", error)
+          if (error?.status === 401 || error?.message?.includes('401')) {
+            throw new Error('Token expirado. Por favor, inicia sesión nuevamente.')
+          }
+          throw error
         }
-
-        throw new Error("Token required for generate type sessions")
       },
 
       updateSession: (id, data) => {
@@ -460,39 +436,39 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       getSessionStats: (days: number, userId?: string) => {
         const userStats = get().userStats
-        
+
         // 🚀 NUEVA LÓGICA: Usar datos del backend directamente cuando estén disponibles
         if (userStats?.overall_stats && userId) {
           const backendStats = userStats.overall_stats
-          
+
           // Construir gráficos desde recent_sessions_stats del backend
           const recentSessions = userStats.recent_sessions_stats || []
-          
+
           // Definir tipo para las sesiones del backend
           type BackendSession = StatsResponse['recent_sessions_stats'][0]
-          
+
           // Filtrar por rango de días si es necesario
           const now = new Date()
           const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-          
+
           const filteredBackendSessions = recentSessions.filter((session: BackendSession) => {
             const sessionDate = new Date(session.created_at_local || session.created_at)
             return sessionDate >= startDate && sessionDate <= now
           })
-          
+
           // Construir datos de gráficos directamente desde el backend
           const sortedSessions = filteredBackendSessions
-            .sort((a: BackendSession, b: BackendSession) => new Date(a.created_at_local || a.created_at).getTime() - 
-                           new Date(b.created_at_local || b.created_at).getTime())
+            .sort((a: BackendSession, b: BackendSession) => new Date(a.created_at_local || a.created_at).getTime() -
+              new Date(b.created_at_local || b.created_at).getTime())
             .slice(-20) // Últimas 20 sesiones para mejor visualización
-          
+
           const wpmData = sortedSessions.map((session: BackendSession) => ({
             name: formatDateInLima(session.created_at_local || session.created_at),
             value: session.wpm,
             fullDate: session.created_at,
             sessionId: session.session_id,
           }))
-          
+
           const scoreData = sortedSessions
             .filter((session: BackendSession) => session.quiz_taken)
             .map((session: BackendSession) => ({
@@ -501,19 +477,19 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               fullDate: session.created_at,
               sessionId: session.session_id,
             }))
-          
+
           // Distribución de temas desde backend
           const topicCounts = filteredBackendSessions.reduce((acc: Record<string, number>, session: BackendSession) => {
             const topic = session.topic || "Sin categoría"
             acc[topic] = (acc[topic] || 0) + 1
             return acc
           }, {})
-          
+
           const topicData = Object.entries(topicCounts)
             .map(([name, value]) => ({ name, value: value as number }))
             .sort((a, b) => (b.value as number) - (a.value as number))
             .slice(0, 8)
-          
+
           // ✅ DEVOLVER DATOS DEL BACKEND CON MÍNIMO PROCESAMIENTO
           return {
             // Usar directamente los valores calculados por el backend
@@ -521,18 +497,18 @@ export const useWorkspaceStore = create<WorkspaceState>()(
             avgScore: Math.round(backendStats.average_quiz_score),
             totalSessions: filteredBackendSessions.length,
             totalTime: Math.round(backendStats.total_reading_time_seconds),
-            
+
             // Usar las tendencias calculadas por el backend
             wpmImprovement: Math.round(backendStats.delta_wpm_vs_previous),
             scoreImprovement: Math.round(backendStats.delta_comprehension_vs_previous),
-            
+
             // Gráficos construidos desde datos reales del backend
             wpmData,
             scoreData,
             topicData,
           }
         }
-        
+
         // 📊 FALLBACK: Cálculo local para compatibilidad (cuando no hay datos del backend)
         console.log('⚠️ Usando cálculo local - datos del backend no disponibles')
         const now = new Date()

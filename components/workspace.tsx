@@ -12,6 +12,7 @@ import ParagraphWindow from "@/components/windows/paragraph-window"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { rsvpApi } from "@/lib/rsvpApi"
 
 interface WorkspaceProps {
   sidebarOpen: boolean
@@ -23,12 +24,12 @@ export default function Workspace({ sidebarOpen }: WorkspaceProps) {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (activeSession) {
+    if (typeof activeSession === "string" && typeof token === "string") {
       loadSession(activeSession, token)
     }
   }, [activeSession, loadSession, token])
 
-  const handleAddWindow = (type: string) => {
+  const handleAddWindow = async (type: string) => {
     addWindow(type)
     toast({
       title: "Ventana añadida",
@@ -47,14 +48,6 @@ export default function Workspace({ sidebarOpen }: WorkspaceProps) {
             className="flex items-center gap-1"
           >
             <PlusCircle className="h-4 w-4" /> Tema
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAddWindow("assistant")}
-            className="flex items-center gap-1"
-          >
-            <PlusCircle className="h-4 w-4" /> Asistente
           </Button>
         </div>
       </div>

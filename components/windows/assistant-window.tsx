@@ -10,6 +10,8 @@ import { Send, Loader2 } from "lucide-react"
 import { rsvpApi } from "@/lib/rsvpApi"
 import { useAuthStore } from "@/lib/auth-store"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import type { AssistantRequest } from "@/lib/rsvpApi"
+
 
 interface Message {
   role: "user" | "assistant"
@@ -90,7 +92,12 @@ export default function AssistantWindow({ windowData }: AssistantWindowProps) {
 
     try {
       if (!token) throw new Error("No autenticado")
-      const response = await rsvpApi.assistant({ query: input, rsvp_session_id: sessionId }, token)
+      const payload: AssistantRequest = sessionId
+        ? { query: input, rsvp_session_id: sessionId }
+        : { query: input, rsvp_session_id: "general-context" } // o un valor dummy que tu backend acepte
+
+      const response = await rsvpApi.assistant(payload, token)
+
       const messageText = response.response
 
       const assistantMessage: Message = {
@@ -141,11 +148,10 @@ export default function AssistantWindow({ windowData }: AssistantWindowProps) {
                   </div>
                   <div>
                     <div
-                      className={`p-3 rounded-lg ${
-                        message.role === "user"
+                      className={`p-3 rounded-lg ${message.role === "user"
                           ? "bg-slate-900 text-white dark:bg-slate-700"
                           : "bg-slate-100 dark:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                     </div>

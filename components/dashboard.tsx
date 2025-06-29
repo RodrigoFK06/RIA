@@ -16,6 +16,7 @@ import MetricsOverview from "@/components/metrics-overview"
 import RecentSessions from "@/components/recent-sessions"
 import StatsHistory from "@/components/stats-history"
 import { useBreakpoint } from "@/hooks/use-breakpoint"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -67,6 +68,8 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
   const { user, token } = useAuthStore()
   const { toast } = useToast()
   const { isMobile, isTablet } = useBreakpoint()
+  const [isLoading, setIsLoading] = useState(false)
+
 
   const overall = userStats?.overall_stats
 
@@ -93,8 +96,8 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
       // Create a new session - PASAR userId PARA FILTRADO DE SEGURIDAD
       const sessionId = await addSession({
         title: type === "generate" ? topic : "Texto personalizado",
-        topic: type === "generate" ? topic : "Personalizado",
-        text: type === "custom" ? customText : "",
+        topic: type === "custom" ? `__raw__:${customText}` : topic,
+        text: "",
         folderId: selectedFolder || null,
         type,
       }, token || undefined, user?.id)
@@ -297,11 +300,17 @@ export default function Dashboard({ setActiveView, activeTab, setActiveTab }: Da
                 <CardFooter>
                   <Button
                     onClick={() => handleCreateSession("generate")}
-                    disabled={!topic.trim()}
+                    disabled={!topic.trim() || isLoading}
                     className="w-full"
-                    size={isMobile ? "default" : "default"}
                   >
-                    {isMobile ? "Generar" : "Generar Contenido"}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        {isMobile ? "Generando..." : "Generando..."}
+                      </>
+                    ) : (
+                      isMobile ? "Generar" : "Generar Contenido"
+                    )}
                   </Button>
                 </CardFooter>
               </Card>

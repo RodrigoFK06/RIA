@@ -66,7 +66,7 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
     }
   }
 
-  const handleUseCustomText = () => {
+  const handleUseCustomText = async () => {
     if (!customText.trim()) {
       toast({
         title: "Error",
@@ -76,21 +76,37 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
       return
     }
 
-    // Create words array from custom text
-    const words = customText.split(/\s+/).filter((word) => word.length > 0)
+    setIsLoading(true)
+    try {
+      if (!token) throw new Error("No autenticado")
 
-    // Add reader window with the custom content
-    addWindow("reader", {
-      sessionId: `custom-${Date.now()}`,
-      text: customText,
-      words: words,
-    })
+      const sessionId = await useWorkspaceStore.getState().addSession({
+        title: "Texto personalizado",
+        topic: `__raw__:${customText}`,
+        folderId: null,
+        type: "custom",
+        text: "", // no se usa, pero requerido por tipo
+      }, token, useAuthStore.getState().user?.id)
 
-    toast({
-      title: "Texto personalizado",
-      description: "Se ha cargado tu texto personalizado.",
-    })
+      // Cargar la sesión normalmente en el reader
+      await useWorkspaceStore.getState().loadSession(sessionId, token)
+
+      toast({
+        title: "Texto personalizado",
+        description: "Tu texto fue cargado correctamente desde el backend.",
+      })
+    } catch (error) {
+      console.error("❌ Error al usar texto personalizado:", error)
+      toast({
+        title: "Error",
+        description: "Hubo un problema al guardar el texto. Inténtalo nuevamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
+
 
   return (
     <WindowFrame
@@ -130,9 +146,9 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
               />
             </div>
 
-            <Button 
-              onClick={handleGenerateContent} 
-              disabled={isLoading || !topic.trim()} 
+            <Button
+              onClick={handleGenerateContent}
+              disabled={isLoading || !topic.trim()}
               className="w-full"
               size={isMobile ? "default" : "default"}
             >
@@ -161,9 +177,9 @@ export default function TopicWindow({ windowData }: TopicWindowProps) {
               />
             </div>
 
-            <Button 
-              onClick={handleUseCustomText} 
-              disabled={!customText.trim()} 
+            <Button
+              onClick={handleUseCustomText}
+              disabled={!customText.trim()}
               className="w-full"
               size={isMobile ? "default" : "default"}
             >
